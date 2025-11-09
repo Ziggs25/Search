@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.mrndstvndv.search.ui.theme.SearchTheme
 import androidx.core.net.toUri
+import android.util.Patterns
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,21 +75,33 @@ class MainActivity : ComponentActivity() {
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                 keyboardActions = KeyboardActions(onDone = {
                                      if (filteredPackages.isNotEmpty()) {
-                                     val firstPackage = filteredPackages.first()
-                                         val launchIntent = pm.getLaunchIntentForPackage(firstPackage)
-                                         if (launchIntent != null) {
-                                             startActivity(launchIntent)
-                                         }
-                                         finish()
-                                     } else {
-                                 val query = textState.value.trim()
-                                if (query.isNotEmpty()) {
-                                val url = "https://www.bing.com/search?q=${Uri.encode(query)}&form=QBLH"
-                                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                                startActivity(intent)
-                                finish()
-                                }
-                                }
+                                        val firstPackage = filteredPackages.first()
+                                        val launchIntent = pm.getLaunchIntentForPackage(firstPackage)
+                                        if (launchIntent != null) {
+                                            startActivity(launchIntent)
+                                        }
+                                        finish()
+                                    } else {
+                                        val query = textState.value.trim()
+                                        if (query.isNotEmpty()) {
+                                            if (Patterns.WEB_URL.matcher(query).matches()) {
+                                                val normalizedUrl = if (query.startsWith("http://", ignoreCase = true) ||
+                                                    query.startsWith("https://", ignoreCase = true)
+                                                ) {
+                                                    query
+                                                } else {
+                                                    "https://$query"
+                                                }
+                                                val intent = Intent(Intent.ACTION_VIEW, normalizedUrl.toUri())
+                                                startActivity(intent)
+                                            } else {
+                                                val url = "https://www.bing.com/search?q=${Uri.encode(query)}&form=QBLH"
+                                                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                                                startActivity(intent)
+                                            }
+                                            finish()
+                                        }
+                                    }
                                 })
                             )
                         }
