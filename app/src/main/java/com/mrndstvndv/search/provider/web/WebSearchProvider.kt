@@ -54,7 +54,7 @@ class WebSearchProvider(
             }
             ProviderResult(
                 id = "$id:${site.id}:${actualQuery.hashCode()}",
-                title = "Search \"$cleaned\"",
+                title = "Search \"$actualQuery\"",
                 subtitle = if (site.id == defaultSite.id) {
                     "${site.displayName} (default)"
                 } else {
