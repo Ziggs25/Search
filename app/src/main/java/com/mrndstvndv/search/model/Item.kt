@@ -1,9 +1,9 @@
 package com.mrndstvndv.search.model
 
-import androidx.compose.ui.graphics.painter.Painter
+import android.graphics.Bitmap
 
 data class Item(
     val id: String,
     val label: String,
-    val icon: Painter? = null
+    val icon: Bitmap? = null
 )

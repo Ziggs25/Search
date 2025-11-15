@@ -1,9 +1,13 @@
 package com.mrndstvndv.search
 
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Patterns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,25 +20,28 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.mrndstvndv.search.model.Item
-import com.mrndstvndv.search.ui.components.SearchField
-import com.mrndstvndv.search.ui.components.ItemsList
-import com.mrndstvndv.search.ui.theme.SearchTheme
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
-import android.util.Patterns
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
+import com.mrndstvndv.search.model.Item
+import com.mrndstvndv.search.ui.components.ItemsList
+import com.mrndstvndv.search.ui.components.SearchField
+import com.mrndstvndv.search.ui.theme.SearchTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.math.pow
 
 class MainActivity : ComponentActivity() {
+    private val defaultAppIconSize by lazy { resources.getDimensionPixelSize(android.R.dimen.app_icon_size) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -66,17 +73,27 @@ class MainActivity : ComponentActivity() {
                 getCalculatorResult(textState.value)
             }
 
-            val packageItems = remember(filteredPackages) {
-                filteredPackages.mapNotNull { packageName ->
-                    runCatching {
-                        val app = pm.getApplicationInfo(packageName, 0)
-                        Item(
-                            id = packageName,
-                            label = pm.getApplicationLabel(app).toString(),
-                            icon = null
-                        )
-                    }.getOrNull()
+            val iconCache = remember { mutableStateMapOf<String, Bitmap?>() }
+
+            LaunchedEffect(filteredPackages) {
+                filteredPackages.forEach { packageName ->
+                    if (packageName in iconCache) return@forEach
+                    val bitmap = withContext(Dispatchers.IO) {
+                        loadAppIconBitmap(pm, packageName, defaultAppIconSize)
+                    }
+                    iconCache[packageName] = bitmap
                 }
+            }
+
+            val packageItems = filteredPackages.mapNotNull { packageName ->
+                runCatching {
+                    val app = pm.getApplicationInfo(packageName, 0)
+                    Item(
+                        id = packageName,
+                        label = pm.getApplicationLabel(app).toString(),
+                        icon = iconCache[packageName]
+                    )
+                }.getOrNull()
             }
 
             SearchTheme {
@@ -168,6 +185,37 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             window.decorView?.let { window.setBackgroundBlurRadius(40) }
         }
+    }
+
+    private fun loadAppIconBitmap(pm: PackageManager, packageName: String, iconSize: Int): Bitmap? {
+        if (!isPackageInstalled(pm, packageName)) return null
+        return runCatching {
+            val app = pm.getApplicationInfo(packageName, 0)
+            app.loadIcon(pm).toBitmapOrNull(iconSize)
+        }.getOrNull()
+    }
+
+    private fun isPackageInstalled(pm: PackageManager, packageName: String): Boolean {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pm.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getPackageInfo(packageName, 0)
+            }
+            true
+        } catch (_: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
+
+    private fun Drawable.toBitmapOrNull(iconSize: Int): Bitmap? {
+        val width = intrinsicWidth.takeIf { it > 0 } ?: iconSize
+        val height = intrinsicHeight.takeIf { it > 0 } ?: iconSize
+        setBounds(0, 0, width, height)
+        return runCatching {
+            toBitmap(width, height, Bitmap.Config.ARGB_8888)
+        }.getOrNull()
     }
 }
 
