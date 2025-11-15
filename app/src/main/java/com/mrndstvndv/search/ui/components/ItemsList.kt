@@ -35,10 +35,10 @@ import com.mrndstvndv.search.provider.model.ProviderResult
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ItemsList(
+    modifier: Modifier = Modifier,
     results: List<ProviderResult>,
     onItemClick: (ProviderResult) -> Unit,
     onItemLongPress: ((ProviderResult) -> Unit)? = null,
-    modifier: Modifier = Modifier
 ) {
     if (results.isEmpty()) return
 
