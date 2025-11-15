@@ -31,8 +31,8 @@ class CalculatorProvider(
         return listOf(
             ProviderResult(
                 id = "$id:$expression",
-                title = expression,
-                subtitle = result,
+                title = "= $result",
+                subtitle = expression,
                 providerId = id,
                 onSelect = action
             )
