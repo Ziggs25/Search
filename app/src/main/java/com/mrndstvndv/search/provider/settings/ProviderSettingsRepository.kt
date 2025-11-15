@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import androidx.core.content.edit
 
 class ProviderSettingsRepository(context: Context) {
     companion object {
@@ -20,7 +21,7 @@ class ProviderSettingsRepository(context: Context) {
     val webSearchSettings: StateFlow<WebSearchSettings> = _webSearchSettings
 
     fun saveWebSearchSettings(settings: WebSearchSettings) {
-        preferences.edit().putString(KEY_WEB_SEARCH, settings.toJsonString()).apply()
+        preferences.edit { putString(KEY_WEB_SEARCH, settings.toJsonString()) }
         _webSearchSettings.value = settings
     }
 

@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONArray
 import org.json.JSONException
-import org.json.JSONObject
+import androidx.core.content.edit
 
 class AliasRepository(context: Context) {
     companion object {
@@ -65,7 +65,7 @@ class AliasRepository(context: Context) {
     private fun persist(entries: List<AliasEntry>) {
         val array = JSONArray()
         entries.forEach { array.put(it.toJson()) }
-        preferences.edit().putString(KEY_ALIASES, array.toString()).apply()
+        preferences.edit { putString(KEY_ALIASES, array.toString()) }
     }
 
     private fun loadAliases(): List<AliasEntry> {

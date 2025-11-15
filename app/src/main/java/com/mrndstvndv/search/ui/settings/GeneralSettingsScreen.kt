@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mrndstvndv.search.alias.AliasRepository
 import com.mrndstvndv.search.provider.settings.ProviderSettingsRepository
-import com.mrndstvndv.search.ui.settings.WebSearchProviderSettingsDialog
 
 @Composable
 fun GeneralSettingsScreen(

@@ -221,7 +221,7 @@ class MainActivity : ComponentActivity() {
                 val resolvedSite = site ?: return null
                 val searchUrl = resolvedSite.buildUrl(query)
                 val action = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(searchUrl))
+                    val intent = Intent(Intent.ACTION_VIEW, searchUrl.toUri())
                     startActivity(intent)
                     finish()
                 }

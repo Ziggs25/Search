@@ -1,16 +1,16 @@
 package com.mrndstvndv.search.provider.web
 
 import android.content.Intent
-import android.net.Uri
 import android.util.Patterns
 import androidx.activity.ComponentActivity
+import androidx.core.net.toUri
 import com.mrndstvndv.search.alias.WebSearchAliasTarget
 import com.mrndstvndv.search.provider.Provider
 import com.mrndstvndv.search.provider.model.ProviderResult
 import com.mrndstvndv.search.provider.model.Query
 import com.mrndstvndv.search.provider.settings.ProviderSettingsRepository
-import androidx.core.net.toUri
 
+// TODO: the query should be empty if a whitespace between the trigger and query is not yet made. the behavior right now is that the searchitem searches for the trigger if a query is not yet made
 class WebSearchProvider(
     private val activity: ComponentActivity,
     private val settingsRepository: ProviderSettingsRepository
