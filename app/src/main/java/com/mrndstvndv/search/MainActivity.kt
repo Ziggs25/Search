@@ -11,17 +11,18 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
@@ -29,11 +30,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.mrndstvndv.search.provider.apps.AppListProvider
 import com.mrndstvndv.search.provider.calculator.CalculatorProvider
-import com.mrndstvndv.search.provider.web.WebSearchProvider
 import com.mrndstvndv.search.provider.model.ProviderResult
 import com.mrndstvndv.search.provider.model.Query
+import com.mrndstvndv.search.provider.settings.ProviderSettingsRepository
+import com.mrndstvndv.search.provider.web.WebSearchProvider
 import com.mrndstvndv.search.ui.components.ItemsList
 import com.mrndstvndv.search.ui.components.SearchField
+import com.mrndstvndv.search.ui.settings.WebSearchProviderSettingsDialog
 import com.mrndstvndv.search.ui.theme.SearchTheme
 import com.mrndstvndv.search.util.CalculatorEngine
 import kotlinx.coroutines.Dispatchers
@@ -49,12 +52,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             val textState = remember { mutableStateOf("") }
             val focusRequester = remember { FocusRequester() }
+            val settingsRepository = remember(this@MainActivity) { ProviderSettingsRepository(this@MainActivity) }
+            val webSearchSettings by settingsRepository.webSearchSettings.collectAsState()
+            var showSettingsDialog by remember { mutableStateOf(false) }
 
             val providers = remember(this@MainActivity) {
                 listOf(
                     AppListProvider(this@MainActivity, defaultAppIconSize),
                     CalculatorProvider(this@MainActivity),
-                    WebSearchProvider(this@MainActivity)
+                    WebSearchProvider(this@MainActivity, settingsRepository)
                 )
             }
             val providerResults = remember { mutableStateListOf<ProviderResult>() }
@@ -105,6 +111,15 @@ class MainActivity : ComponentActivity() {
                             })
                         )
 
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            TextButton(onClick = { showSettingsDialog = true }) {
+                                Text(text = "Provider settings")
+                            }
+                        }
                         Spacer(modifier = Modifier.height(6.dp))
 
                         ItemsList(
@@ -114,6 +129,17 @@ class MainActivity : ComponentActivity() {
                     }
 
                 }
+            }
+
+            if (showSettingsDialog) {
+                WebSearchProviderSettingsDialog(
+                    initialSettings = webSearchSettings,
+                    onDismiss = { showSettingsDialog = false },
+                    onSave = { newSettings ->
+                        settingsRepository.saveWebSearchSettings(newSettings)
+                        showSettingsDialog = false
+                    }
+                )
             }
 
             LaunchedEffect(Unit) {

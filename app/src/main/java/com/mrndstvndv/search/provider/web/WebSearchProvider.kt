@@ -7,9 +7,11 @@ import androidx.activity.ComponentActivity
 import com.mrndstvndv.search.provider.Provider
 import com.mrndstvndv.search.provider.model.ProviderResult
 import com.mrndstvndv.search.provider.model.Query
+import com.mrndstvndv.search.provider.settings.ProviderSettingsRepository
 
 class WebSearchProvider(
-    private val activity: ComponentActivity
+    private val activity: ComponentActivity,
+    private val settingsRepository: ProviderSettingsRepository
 ) : Provider {
 
     override val id: String = "web-search"
@@ -25,7 +27,10 @@ class WebSearchProvider(
         val cleaned = query.trimmedText
         if (cleaned.isBlank()) return emptyList()
 
-        val searchUrl = buildSearchUrl(cleaned)
+        val settings = settingsRepository.webSearchSettings.value
+        val site = settings.siteForId(settings.defaultSiteId) ?: settings.sites.first()
+        val searchUrl = site.buildUrl(cleaned)
+
         val action = {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(searchUrl))
             activity.startActivity(intent)
@@ -34,17 +39,12 @@ class WebSearchProvider(
 
         return listOf(
             ProviderResult(
-                id = "$id:${cleaned.hashCode()}",
+                id = "$id:${site.id}:${cleaned.hashCode()}",
                 title = "Search \"$cleaned\"",
-                subtitle = "Bing",
+                subtitle = site.displayName,
                 providerId = id,
                 onSelect = action
             )
         )
-    }
-
-    private fun buildSearchUrl(text: String): String {
-        val encoded = Uri.encode(text)
-        return "https://www.bing.com/search?q=$encoded&form=QBLH"
     }
 }
