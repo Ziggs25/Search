@@ -70,6 +70,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
             val providerResults = remember { mutableStateListOf<ProviderResult>() }
+            var shouldShowResults by remember { mutableStateOf(false) }
 
             var aliasDialogCandidate by remember { mutableStateOf<AliasCreationCandidate?>(null) }
             var aliasDialogValue by remember { mutableStateOf("") }
@@ -95,6 +96,7 @@ class MainActivity : ComponentActivity() {
                 providerResults.clear()
                 aliasResult?.let { providerResults.add(it) }
                 providerResults.addAll(filtered)
+                shouldShowResults = normalizedText.isNotBlank() || match != null
             }
 
             SearchTheme {
@@ -142,7 +144,7 @@ class MainActivity : ComponentActivity() {
                         Spacer(modifier = Modifier.height(6.dp))
 
                         ItemsList(
-                            results = providerResults,
+                        results = if (shouldShowResults) providerResults else emptyList(),
                             onItemClick = { result -> result.onSelect?.invoke() },
                             onItemLongPress = onItemLongPress@{ result ->
                                 val target = result.aliasTarget ?: return@onItemLongPress
