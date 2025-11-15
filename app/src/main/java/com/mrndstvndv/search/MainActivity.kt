@@ -24,9 +24,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.mrndstvndv.search.model.Item
 import com.mrndstvndv.search.ui.components.SearchField
 import com.mrndstvndv.search.ui.components.ItemsList
-import com.mrndstvndv.search.ui.components.PackageItem
 import com.mrndstvndv.search.ui.theme.SearchTheme
 import androidx.core.net.toUri
 import android.util.Patterns
@@ -70,7 +70,11 @@ class MainActivity : ComponentActivity() {
                 filteredPackages.mapNotNull { packageName ->
                     runCatching {
                         val app = pm.getApplicationInfo(packageName, 0)
-                        PackageItem(packageName, pm.getApplicationLabel(app).toString())
+                        Item(
+                            id = packageName,
+                            label = pm.getApplicationLabel(app).toString(),
+                            icon = null
+                        )
                     }.getOrNull()
                 }
             }
