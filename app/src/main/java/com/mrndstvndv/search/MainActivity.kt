@@ -10,10 +10,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -29,6 +25,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.mrndstvndv.search.ui.components.SearchField
+import com.mrndstvndv.search.ui.components.ItemsList
+import com.mrndstvndv.search.ui.components.PackageItem
 import com.mrndstvndv.search.ui.theme.SearchTheme
 import androidx.core.net.toUri
 import android.util.Patterns
@@ -66,6 +64,15 @@ class MainActivity : ComponentActivity() {
 
             val calculatorResult = remember(textState.value) {
                 getCalculatorResult(textState.value)
+            }
+
+            val packageItems = remember(filteredPackages) {
+                filteredPackages.mapNotNull { packageName ->
+                    runCatching {
+                        val app = pm.getApplicationInfo(packageName, 0)
+                        PackageItem(packageName, pm.getApplicationLabel(app).toString())
+                    }.getOrNull()
+                }
             }
 
             SearchTheme {
@@ -131,34 +138,16 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                        ) {
-                            items(filteredPackages.size) { index ->
-                                val packageName = filteredPackages[index]
-                                val app = packageManager.getApplicationInfo(packageName, 0)
-                                val shape = if (filteredPackages.size == 1) {
-                                    RoundedCornerShape(20.dp)
-                                } else if (index == 0) {
-                                    RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, 5.dp, 5.dp)
-                                } else if (index == filteredPackages.lastIndex) {
-                                    RoundedCornerShape(5.dp, 5.dp,  bottomStart = 20.dp, bottomEnd = 20.dp)
-                                } else {
-                                    RoundedCornerShape(5.dp)
+                        ItemsList(
+                            appItems = packageItems,
+                            onItemClick = { packageName ->
+                                val intent = pm.getLaunchIntentForPackage(packageName)
+                                if (intent != null) {
+                                    startActivity(intent)
                                 }
-                                Surface(shape = shape, tonalElevation = 1.dp) {
-                                    Box(Modifier.fillMaxWidth().height(60.dp).clickable {
-                                        val intent = pm.getLaunchIntentForPackage(packageName)
-                                        if (intent != null) {
-                                            startActivity(intent)
-                                        }
-                                        finish()
-                                    }, contentAlignment = Alignment.CenterStart) {
-                                        Text(pm.getApplicationLabel(app).toString(), modifier = Modifier.padding(start = 16.dp))
-                                    }
-                                }
+                                finish()
                             }
-                        }
+                        )
                     }
 
                 }
