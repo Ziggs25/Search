@@ -62,6 +62,7 @@ import com.mrndstvndv.search.ui.components.SearchField
 import com.mrndstvndv.search.ui.settings.AliasCreationDialog
 import com.mrndstvndv.search.ui.theme.SearchTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
@@ -97,6 +98,7 @@ class MainActivity : ComponentActivity() {
             var aliasDialogValue by remember { mutableStateOf("") }
             var aliasDialogError by remember { mutableStateOf<String?>(null) }
             var isPerformingAction by remember { mutableStateOf(false) }
+            var showLoadingOverlay by remember { mutableStateOf(false) }
             var pendingAction by remember { mutableStateOf<PendingAction?>(null) }
 
             fun startPendingAction(result: ProviderResult?) {
@@ -241,23 +243,37 @@ class MainActivity : ComponentActivity() {
                                     indication = null
                                 ) { }
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
-                                            .copy(alpha = 0.95f),
-                                        shape = RoundedCornerShape(28.dp)
-                                    )
-                                    .padding(horizontal = 28.dp, vertical = 24.dp)
-                            ) {
-                                LoadingIndicator(
+                            if (showLoadingOverlay) {
+                                Box(
                                     modifier = Modifier
-                                        .size(48.dp)
-                                )
+                                        .align(Alignment.Center)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+                                                .copy(alpha = 0.95f),
+                                            shape = RoundedCornerShape(28.dp)
+                                        )
+                                        .padding(horizontal = 28.dp, vertical = 24.dp)
+                                ) {
+                                    LoadingIndicator(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                    )
+                                }
                             }
                         }
                     }
+                }
+            }
+
+            LaunchedEffect(isPerformingAction) {
+                if (isPerformingAction) {
+                    showLoadingOverlay = false
+                    delay(100)
+                    if (isPerformingAction) {
+                        showLoadingOverlay = true
+                    }
+                } else {
+                    showLoadingOverlay = false
                 }
             }
 
