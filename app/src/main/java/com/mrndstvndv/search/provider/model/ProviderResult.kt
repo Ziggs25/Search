@@ -12,5 +12,6 @@ data class ProviderResult(
     val score: Float = 0f,
     val extras: Map<String, Any?> = emptyMap(),
     val onSelect: (suspend () -> Unit)? = null,
-    val aliasTarget: AliasTarget? = null
+    val aliasTarget: AliasTarget? = null,
+    val keepOverlayUntilExit: Boolean = false
 )

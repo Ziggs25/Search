@@ -70,7 +70,8 @@ class WebSearchProvider(
                 },
                 providerId = id,
                 onSelect = action,
-                aliasTarget = WebSearchAliasTarget(site.id, site.displayName)
+                aliasTarget = WebSearchAliasTarget(site.id, site.displayName),
+                keepOverlayUntilExit = true
             )
         }
     }

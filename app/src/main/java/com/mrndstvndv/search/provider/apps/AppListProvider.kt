@@ -55,7 +55,8 @@ class AppListProvider(
                 providerId = id,
                 extras = mapOf(EXTRA_PACKAGE_NAME to entry.packageName),
                 onSelect = action,
-                aliasTarget = AppLaunchAliasTarget(entry.packageName, entry.label)
+                aliasTarget = AppLaunchAliasTarget(entry.packageName, entry.label),
+                keepOverlayUntilExit = true
             )
         }
         return results

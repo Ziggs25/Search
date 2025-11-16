@@ -97,12 +97,13 @@ class MainActivity : ComponentActivity() {
             var aliasDialogValue by remember { mutableStateOf("") }
             var aliasDialogError by remember { mutableStateOf<String?>(null) }
             var isPerformingAction by remember { mutableStateOf(false) }
-            var pendingAction by remember { mutableStateOf<(suspend () -> Unit)?>(null) }
+            var pendingAction by remember { mutableStateOf<PendingAction?>(null) }
 
-            fun startPendingAction(action: (suspend () -> Unit)?) {
-                if (action == null || isPerformingAction) return
+            fun startPendingAction(result: ProviderResult?) {
+                val action = result?.onSelect ?: return
+                if (isPerformingAction) return
                 isPerformingAction = true
-                pendingAction = action
+                pendingAction = PendingAction(action, result.keepOverlayUntilExit)
             }
 
             LaunchedEffect(textState.value, aliasEntries, webSearchSettings) {
@@ -164,9 +165,9 @@ class MainActivity : ComponentActivity() {
                                 placeholder = { Text("Search") },
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                 keyboardActions = KeyboardActions(onDone = {
-                                    val primaryAction = providerResults.firstOrNull()?.onSelect
-                                    if (primaryAction != null) {
-                                        startPendingAction(primaryAction)
+                                    val primaryResult = providerResults.firstOrNull()
+                                    if (primaryResult?.onSelect != null) {
+                                        startPendingAction(primaryResult)
                                     } else {
                                         val query = textState.value.trim()
                                         if (query.isNotEmpty()) {
@@ -215,7 +216,7 @@ class MainActivity : ComponentActivity() {
                             ItemsList(
                                 modifier = Modifier.fillMaxSize(),
                                 results = providerResults,
-                                onItemClick = { result -> startPendingAction(result.onSelect) },
+                                onItemClick = { result -> startPendingAction(result) },
                                 onItemLongPress = onItemLongPress@{ result ->
                                     val target = result.aliasTarget ?: return@onItemLongPress
                                     val suggestion = sanitizeAliasSuggestion(result.title)
@@ -262,13 +263,19 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(pendingAction) {
                 val action = pendingAction ?: return@LaunchedEffect
+                var completed = false
                 try {
                     withContext(Dispatchers.Default) {
-                        action()
+                        action.block()
                     }
+                    completed = true
                 } finally {
-                    isPerformingAction = false
                     pendingAction = null
+                    val shouldDismissOverlay =
+                        !action.keepOverlayUntilExit || !completed || !this@MainActivity.isFinishing
+                    if (shouldDismissOverlay) {
+                        isPerformingAction = false
+                    }
                 }
             }
 
@@ -342,7 +349,8 @@ class MainActivity : ComponentActivity() {
                     subtitle = "Alias \"${entry.alias}\" → ${resolvedSite.displayName}",
                     providerId = target.providerId,
                     onSelect = action,
-                    aliasTarget = target
+                    aliasTarget = target,
+                    keepOverlayUntilExit = true
                 )
             }
             is AppLaunchAliasTarget -> {
@@ -361,7 +369,8 @@ class MainActivity : ComponentActivity() {
                     subtitle = "Alias \"${entry.alias}\"",
                     providerId = target.providerId,
                     onSelect = action,
-                    aliasTarget = target
+                    aliasTarget = target,
+                    keepOverlayUntilExit = true
                 )
             }
             else -> null
@@ -381,3 +390,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+private data class PendingAction(
+    val block: suspend () -> Unit,
+    val keepOverlayUntilExit: Boolean
+)
