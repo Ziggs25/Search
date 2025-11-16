@@ -22,7 +22,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -62,6 +63,7 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     private val defaultAppIconSize by lazy { resources.getDimensionPixelSize(android.R.dimen.app_icon_size) }
 
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -232,8 +234,10 @@ class MainActivity : ComponentActivity() {
                                     indication = null
                                 ) { }
                         ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.Center)
+                            LoadingIndicator(
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .size(72.dp)
                             )
                         }
                     }
