@@ -19,6 +19,16 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.Search">
         <activity
+            android:name=".SettingsActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Search">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity
                 android:name=".MainActivity"
                 android:clearTaskOnLaunch="true"
                 android:excludeFromRecents="true"
@@ -28,18 +38,12 @@
                 android:windowSoftInputMode="stateAlwaysVisible|adjustResize"
                 android:theme="@style/Theme.Search">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
                 <action android:name="android.intent.action.ASSIST" />
                 <action android:name="android.intent.action.SEARCH_LONG_PRESS" />
 
-                <category android:name="android.intent.category.LAUNCHER"/>
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".SettingsActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Search" />
     </application>
 
 </manifest>
