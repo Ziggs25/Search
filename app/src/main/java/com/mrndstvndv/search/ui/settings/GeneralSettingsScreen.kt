@@ -170,7 +170,8 @@ private fun SettingsHeader(onClose: () -> Unit) {
         Column {
             Text(
                 text = "Settings",
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground
             )
             Text(
                 text = "Tune how Search behaves on this device.",
@@ -181,7 +182,8 @@ private fun SettingsHeader(onClose: () -> Unit) {
         IconButton(onClick = onClose) {
             Icon(
                 imageVector = Icons.Rounded.Close,
-                contentDescription = "Close settings"
+                contentDescription = "Close settings",
+                tint = MaterialTheme.colorScheme.onBackground
             )
         }
     }
