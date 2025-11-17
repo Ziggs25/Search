@@ -15,6 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Slider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mrndstvndv.search.alias.AliasRepository
 import com.mrndstvndv.search.provider.settings.ProviderSettingsRepository
+import kotlin.math.roundToInt
 
 @Composable
 fun GeneralSettingsScreen(
@@ -36,6 +38,7 @@ fun GeneralSettingsScreen(
     val aliasEntries by aliasRepository.aliases.collectAsState()
     val webSearchSettings by settingsRepository.webSearchSettings.collectAsState()
     val translucentResultsEnabled by settingsRepository.translucentResultsEnabled.collectAsState()
+    val backgroundOpacity by settingsRepository.backgroundOpacity.collectAsState()
     var showWebSearchDialog by remember { mutableStateOf(false) }
 
     Surface(
@@ -106,6 +109,37 @@ fun GeneralSettingsScreen(
                     onCheckedChange = { checked ->
                         settingsRepository.setTranslucentResultsEnabled(checked)
                     }
+                )
+            }
+            Spacer(modifier = Modifier.padding(8.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Background opacity",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = "Adjust how strong the dimmed background appears behind the search UI.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Text(
+                        text = "${(backgroundOpacity * 100).roundToInt()}%"
+                    )
+                }
+                Slider(
+                    value = backgroundOpacity,
+                    onValueChange = { settingsRepository.setBackgroundOpacity(it) },
+                    valueRange = 0f..1f,
+                    steps = 9,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 

@@ -81,6 +81,7 @@ class MainActivity : ComponentActivity() {
             val aliasEntries by aliasRepository.aliases.collectAsState()
             val webSearchSettings by settingsRepository.webSearchSettings.collectAsState()
             val translucentResultsEnabled by settingsRepository.translucentResultsEnabled.collectAsState()
+            val backgroundOpacity by settingsRepository.backgroundOpacity.collectAsState()
 
             val providers = remember(this@MainActivity) {
                 buildList {
@@ -142,7 +143,7 @@ class MainActivity : ComponentActivity() {
                 Box(
                     Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp).copy(alpha = 0.35f))
+                        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp).copy(alpha = backgroundOpacity))
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null

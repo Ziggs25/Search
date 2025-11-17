@@ -14,6 +14,8 @@ class ProviderSettingsRepository(context: Context) {
         private const val PREF_NAME = "provider_settings"
         private const val KEY_WEB_SEARCH = "web_search"
         private const val KEY_TRANSLUCENT_RESULTS = "translucent_results"
+        private const val KEY_BACKGROUND_OPACITY = "background_opacity"
+        private const val DEFAULT_BACKGROUND_OPACITY = 0.35f
     }
 
     private val preferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -24,6 +26,9 @@ class ProviderSettingsRepository(context: Context) {
     private val _translucentResultsEnabled = MutableStateFlow(loadTranslucentResultsEnabled())
     val translucentResultsEnabled: StateFlow<Boolean> = _translucentResultsEnabled
 
+    private val _backgroundOpacity = MutableStateFlow(loadBackgroundOpacity())
+    val backgroundOpacity: StateFlow<Float> = _backgroundOpacity
+
     fun saveWebSearchSettings(settings: WebSearchSettings) {
         preferences.edit { putString(KEY_WEB_SEARCH, settings.toJsonString()) }
         _webSearchSettings.value = settings
@@ -32,6 +37,12 @@ class ProviderSettingsRepository(context: Context) {
     fun setTranslucentResultsEnabled(enabled: Boolean) {
         preferences.edit { putBoolean(KEY_TRANSLUCENT_RESULTS, enabled) }
         _translucentResultsEnabled.value = enabled
+    }
+
+    fun setBackgroundOpacity(alpha: Float) {
+        val coercedAlpha = alpha.coerceIn(0f, 1f)
+        preferences.edit { putFloat(KEY_BACKGROUND_OPACITY, coercedAlpha) }
+        _backgroundOpacity.value = coercedAlpha
     }
 
     private fun loadWebSearchSettings(): WebSearchSettings {
@@ -45,6 +56,10 @@ class ProviderSettingsRepository(context: Context) {
 
     private fun loadTranslucentResultsEnabled(): Boolean {
         return preferences.getBoolean(KEY_TRANSLUCENT_RESULTS, false)
+    }
+
+    private fun loadBackgroundOpacity(): Float {
+        return preferences.getFloat(KEY_BACKGROUND_OPACITY, DEFAULT_BACKGROUND_OPACITY)
     }
 }
 
