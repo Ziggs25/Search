@@ -7,20 +7,26 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.mrndstvndv.search.alias.AliasRepository
 import com.mrndstvndv.search.provider.settings.ProviderSettingsRepository
 import com.mrndstvndv.search.settings.AssistantRoleManager
 import com.mrndstvndv.search.ui.settings.GeneralSettingsScreen
 import com.mrndstvndv.search.ui.theme.SearchTheme
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsActivity : ComponentActivity() {
     private val assistantRoleManager by lazy { AssistantRoleManager(this) }
     private val defaultAssistantState = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        refreshDefaultAssistantState()
 
         setContent {
             val aliasRepository = remember { AliasRepository(this@SettingsActivity) }
@@ -28,6 +34,9 @@ class SettingsActivity : ComponentActivity() {
             val isDefaultAssistant by defaultAssistantState
             val appName = getString(R.string.app_name)
             SearchTheme {
+                LaunchedEffect(Unit) {
+                    refreshDefaultAssistantState()
+                }
                 GeneralSettingsScreen(
                     aliasRepository = aliasRepository,
                     settingsRepository = settingsRepository,
@@ -46,6 +55,11 @@ class SettingsActivity : ComponentActivity() {
     }
 
     private fun refreshDefaultAssistantState() {
-        defaultAssistantState.value = assistantRoleManager.isDefaultAssistant()
+        lifecycleScope.launch(Dispatchers.Default) {
+            val isDefault = assistantRoleManager.isDefaultAssistant()
+            withContext(Dispatchers.Main) {
+                defaultAssistantState.value = isDefault
+            }
+        }
     }
 }
