@@ -1,3 +1,10 @@
+val appVersion = project.findProperty("appVersion") as? String
+    ?: error("appVersion is missing from gradle.properties")
+val appVersionCode = project.findProperty("appVersionCode")
+    ?.toString()
+    ?.toIntOrNull()
+    ?: error("appVersionCode is missing or invalid in gradle.properties")
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -12,8 +19,8 @@ android {
         applicationId = "com.mrndstvndv.search"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = appVersionCode
+        versionName = appVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
