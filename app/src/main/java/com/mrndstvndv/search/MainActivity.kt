@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -150,10 +151,16 @@ class MainActivity : ComponentActivity() {
                     animationSpec = tween(durationMillis = 300)
                 )
 
+                val tintedPrimaryBackground = lerp(
+                    start = MaterialTheme.colorScheme.surfaceBright,
+                    stop = MaterialTheme.colorScheme.primaryContainer,
+                    fraction = 0.65f
+                )
+                val backgroundColor = tintedPrimaryBackground.copy(alpha = backgroundOpacity.coerceIn(0f, 1f))
                 Box(
                     Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp).copy(alpha = backgroundOpacity))
+                        .background(backgroundColor)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
