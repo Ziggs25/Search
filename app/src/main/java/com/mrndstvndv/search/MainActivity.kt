@@ -8,8 +8,6 @@ import android.util.Patterns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -65,6 +63,8 @@ import com.mrndstvndv.search.ui.components.ItemsList
 import com.mrndstvndv.search.ui.components.SearchField
 import com.mrndstvndv.search.ui.settings.AliasCreationDialog
 import com.mrndstvndv.search.ui.theme.SearchTheme
+import com.mrndstvndv.search.ui.theme.motionAwareVisibility
+import com.mrndstvndv.search.ui.theme.rememberMotionAwareFloat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
             val backgroundOpacity by settingsRepository.backgroundOpacity.collectAsState()
             val backgroundBlurStrength by settingsRepository.backgroundBlurStrength.collectAsState()
             val activityIndicatorDelayMs by settingsRepository.activityIndicatorDelayMs.collectAsState()
-            val animationsEnabled by settingsRepository.animationsEnabled.collectAsState()
+            val motionPreferences by settingsRepository.motionPreferences.collectAsState()
 
             LaunchedEffect(backgroundBlurStrength) {
                 applyWindowBlur(backgroundBlurStrength)
@@ -175,11 +175,11 @@ class MainActivity : ComponentActivity() {
                 shouldShowResults = normalizedText.isNotBlank() || match != null
             }
 
-            SearchTheme {
+            SearchTheme(motionPreferences = motionPreferences) {
                 val hasVisibleResults = shouldShowResults && providerResults.isNotEmpty()
-                val spacerWeight by animateFloatAsState(
+                val spacerWeight by rememberMotionAwareFloat(
                     targetValue = if (hasVisibleResults) 0.01f else 1f,
-                    animationSpec = tween(durationMillis = if (animationsEnabled) 300 else 0),
+                    durationMillis = 300,
                     label = "resultsSpacer"
                 )
 
@@ -249,9 +249,9 @@ class MainActivity : ComponentActivity() {
                             Spacer(Modifier.weight(spacerWeight))
                         }
 
-                        val listEnterDuration = if (animationsEnabled) 250 else 0
-                        val listExitDuration = if (animationsEnabled) 200 else 0
-                        AnimatedVisibility(
+                        val listEnterDuration = 250
+                        val listExitDuration = 200
+                        motionAwareVisibility(
                             visible = hasVisibleResults,
                             modifier = Modifier
                                 .weight(if (hasVisibleResults) 1f else 0.01f)
@@ -284,7 +284,6 @@ class MainActivity : ComponentActivity() {
                                     )
                                 },
                                 translucentItems = translucentResultsEnabled,
-                                animationsEnabled = animationsEnabled
                             )
                         }
                     }

@@ -1,7 +1,6 @@
 package com.mrndstvndv.search.ui.components
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
@@ -34,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.mrndstvndv.search.provider.model.ProviderResult
+import com.mrndstvndv.search.ui.theme.motionAwareTween
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -43,7 +43,6 @@ fun ItemsList(
     onItemClick: (ProviderResult) -> Unit,
     onItemLongPress: ((ProviderResult) -> Unit)? = null,
     translucentItems: Boolean = false,
-    animationsEnabled: Boolean = true,
 ) {
     if (results.isEmpty()) return
 
@@ -74,7 +73,7 @@ fun ItemsList(
                 else -> 5.dp
             }
 
-            val cornerAnimationSpec = tween<Dp>(durationMillis = if (animationsEnabled) 250 else 0)
+            val cornerAnimationSpec = motionAwareTween<Dp>(durationMillis = 250)
             val animatedTopStart by animateDpAsState(targetTopStart, animationSpec = cornerAnimationSpec, label = "shapeTopStart")
             val animatedTopEnd by animateDpAsState(targetTopEnd, animationSpec = cornerAnimationSpec, label = "shapeTopEnd")
             val animatedBottomStart by animateDpAsState(targetBottomStart, animationSpec = cornerAnimationSpec, label = "shapeBottomStart")

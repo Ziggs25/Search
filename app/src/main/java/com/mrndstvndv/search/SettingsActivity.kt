@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.mrndstvndv.search.alias.AliasRepository
 import com.mrndstvndv.search.provider.settings.ProviderSettingsRepository
@@ -32,8 +33,9 @@ class SettingsActivity : ComponentActivity() {
             val aliasRepository = remember { AliasRepository(this@SettingsActivity) }
             val settingsRepository = remember { ProviderSettingsRepository(this@SettingsActivity) }
             val isDefaultAssistant by defaultAssistantState
+            val motionPreferences by settingsRepository.motionPreferences.collectAsState()
             val appName = getString(R.string.app_name)
-            SearchTheme {
+            SearchTheme(motionPreferences = motionPreferences) {
                 LaunchedEffect(Unit) {
                     refreshDefaultAssistantState()
                 }

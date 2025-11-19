@@ -11,12 +11,11 @@
 - Restrict indexing to user-approved roots; enforce permission prompts before scanning.
 - Cache index results and support incremental invalidation on storage changes.
 
-# Animation-Only Enhancements
+# Animation-Only Enhancements ✅
 
-- Replace the ad-hoc animation toggle plumbing with a MotionPreferences model exposed from `ProviderSettingsRepository`, then surface it via a `CompositionLocal` or ambient parameter. This lets composables call helpers like `rememberMotionAwareFloat` instead of threading `animationsEnabled` everywhere and recreating specs manually.
-- Create utility wrappers (`motionAwareTween`, `motionAwareVisibility`) so disabling animations automatically swaps specs for zero-duration ones, and collect motion settings centrally in `SearchTheme` rather than each screen.
+- ~~Replace the ad-hoc animation toggle plumbing with a MotionPreferences model exposed from `ProviderSettingsRepository`, then surface it via a `CompositionLocal` or ambient parameter. This lets composables call helpers like `rememberMotionAwareFloat` instead of threading `animationsEnabled` everywhere and recreating specs manually.~~
+- ~~Create utility wrappers (`motionAwareTween`, `motionAwareVisibility`) so disabling animations automatically swaps specs for zero-duration ones, and collect motion settings centrally in `SearchTheme` rather than each screen.~~
 
 # Calendar Provider
 
 - Add a Calendar provider that surfaces upcoming events/reminders alongside other search providers; source events via `CalendarContract` and consider caching results to avoid UI jank.
-

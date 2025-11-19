@@ -43,8 +43,8 @@ class ProviderSettingsRepository(context: Context) {
     private val _activityIndicatorDelayMs = MutableStateFlow(loadActivityIndicatorDelayMs())
     val activityIndicatorDelayMs: StateFlow<Int> = _activityIndicatorDelayMs
 
-    private val _animationsEnabled = MutableStateFlow(loadAnimationsEnabled())
-    val animationsEnabled: StateFlow<Boolean> = _animationsEnabled
+    private val _motionPreferences = MutableStateFlow(loadMotionPreferences())
+    val motionPreferences: StateFlow<MotionPreferences> = _motionPreferences
 
     private val _textUtilitiesSettings = MutableStateFlow(loadTextUtilitiesSettings())
     val textUtilitiesSettings: StateFlow<TextUtilitiesSettings> = _textUtilitiesSettings
@@ -79,7 +79,7 @@ class ProviderSettingsRepository(context: Context) {
 
     fun setAnimationsEnabled(enabled: Boolean) {
         preferences.edit { putBoolean(KEY_ANIMATIONS_ENABLED, enabled) }
-        _animationsEnabled.value = enabled
+        _motionPreferences.value = _motionPreferences.value.copy(animationsEnabled = enabled)
     }
 
     fun setOpenDecodedUrlsAutomatically(enabled: Boolean) {
@@ -117,6 +117,10 @@ class ProviderSettingsRepository(context: Context) {
 
     private fun loadAnimationsEnabled(): Boolean {
         return preferences.getBoolean(KEY_ANIMATIONS_ENABLED, DEFAULT_ANIMATIONS_ENABLED)
+    }
+
+    private fun loadMotionPreferences(): MotionPreferences {
+        return MotionPreferences(animationsEnabled = loadAnimationsEnabled())
     }
 
     private fun loadTextUtilitiesSettings(): TextUtilitiesSettings {

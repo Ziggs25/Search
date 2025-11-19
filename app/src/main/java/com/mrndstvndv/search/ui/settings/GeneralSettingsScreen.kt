@@ -55,7 +55,8 @@ fun GeneralSettingsScreen(
     val backgroundOpacity by settingsRepository.backgroundOpacity.collectAsState()
     val backgroundBlurStrength by settingsRepository.backgroundBlurStrength.collectAsState()
     val activityIndicatorDelayMs by settingsRepository.activityIndicatorDelayMs.collectAsState()
-    val animationsEnabled by settingsRepository.animationsEnabled.collectAsState()
+    val motionPreferences by settingsRepository.motionPreferences.collectAsState()
+    val animationsEnabled = motionPreferences.animationsEnabled
     val textUtilitiesSettings by settingsRepository.textUtilitiesSettings.collectAsState()
     var showWebSearchDialog by remember { mutableStateOf(false) }
 
