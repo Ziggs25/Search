@@ -163,7 +163,7 @@ class ProviderRankingRepository(context: Context) {
     }
 
     private fun loadUseFrequencyRanking(): Boolean {
-        return preferences.getBoolean(KEY_USE_FREQUENCY_RANKING, false)
+        return preferences.getBoolean(KEY_USE_FREQUENCY_RANKING, true)
     }
 
     private fun saveUseFrequencyRanking(enabled: Boolean) {

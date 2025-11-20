@@ -184,7 +184,7 @@ class ProviderSettingsRepository(context: Context) {
     }
 
     private fun loadTranslucentResultsEnabled(): Boolean {
-        return preferences.getBoolean(KEY_TRANSLUCENT_RESULTS, false)
+        return preferences.getBoolean(KEY_TRANSLUCENT_RESULTS, true)
     }
 
     private fun loadBackgroundOpacity(): Float {
@@ -422,9 +422,9 @@ data class FileSearchSettings(
             scanMetadata = emptyMap(),
             includeDownloads = false,
             loadThumbnails = true,
-            thumbnailCropMode = FileSearchThumbnailCropMode.FIT,
-            sortMode = FileSearchSortMode.DATE,
-            sortAscending = false
+            thumbnailCropMode = FileSearchThumbnailCropMode.CENTER_CROP,
+            sortMode = FileSearchSortMode.NAME,
+            sortAscending = true
         )
 
         fun fromJson(json: JSONObject?): FileSearchSettings? {
@@ -448,9 +448,9 @@ data class FileSearchSettings(
             val loadThumbnails = json.optBoolean("loadThumbnails", true)
             val cropRaw = json.optString("thumbnailCropMode", FileSearchThumbnailCropMode.FIT.name)
             val cropMode = FileSearchThumbnailCropMode.fromStorageValue(cropRaw)
-            val sortRaw = json.optString("sortMode", FileSearchSortMode.DATE.name)
+            val sortRaw = json.optString("sortMode", FileSearchSortMode.NAME.name)
             val sortMode = FileSearchSortMode.fromStorageValue(sortRaw)
-            val sortAscending = json.optBoolean("sortAscending", false)
+            val sortAscending = json.optBoolean("sortAscending", true)
             return FileSearchSettings(
                 roots = roots,
                 scanMetadata = metadata,
@@ -571,8 +571,8 @@ enum class FileSearchThumbnailCropMode {
 
     companion object {
         fun fromStorageValue(value: String?): FileSearchThumbnailCropMode {
-            if (value.isNullOrBlank()) return FIT
-            return entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: FIT
+            if (value.isNullOrBlank()) return CENTER_CROP
+            return entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: CENTER_CROP
         }
     }
 }
@@ -583,8 +583,8 @@ enum class FileSearchSortMode {
 
     companion object {
         fun fromStorageValue(value: String?): FileSearchSortMode {
-            if (value.isNullOrBlank()) return DATE
-            return entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: DATE
+            if (value.isNullOrBlank()) return NAME
+            return entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: NAME
         }
     }
 }

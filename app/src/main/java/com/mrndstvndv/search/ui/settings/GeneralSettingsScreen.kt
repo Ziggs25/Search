@@ -591,7 +591,7 @@ private fun ThumbnailCropModeRow(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        val options = FileSearchThumbnailCropMode.values()
+        val options = listOf(FileSearchThumbnailCropMode.CENTER_CROP, FileSearchThumbnailCropMode.FIT)
         SingleChoiceSegmentedButtonRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -637,7 +637,7 @@ private fun FileSearchSortRow(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        val options = FileSearchSortMode.values()
+        val options = listOf(FileSearchSortMode.NAME, FileSearchSortMode.DATE)
         SingleChoiceSegmentedButtonRow(
             modifier = Modifier
                 .fillMaxWidth()
