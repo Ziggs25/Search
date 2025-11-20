@@ -87,29 +87,53 @@ class ProviderRankingRepository(context: Context) {
     }
 
     /**
-     * Move provider up in ranking (higher priority)
+     * Move provider up in ranking (higher priority).
+     * Skips over disabled providers to swap with the nearest enabled one.
      */
-    fun moveUp(providerId: String) {
+    fun moveUp(providerId: String, isEnabled: (String) -> Boolean) {
         val current = _providerOrder.value.toMutableList()
         val index = current.indexOf(providerId)
-        if (index > 0) {
+        if (index <= 0) return
+
+        // Find the nearest enabled provider above this one
+        var targetIndex = -1
+        for (i in index - 1 downTo 0) {
+            if (isEnabled(current[i])) {
+                targetIndex = i
+                break
+            }
+        }
+
+        if (targetIndex != -1) {
             val temp = current[index]
-            current[index] = current[index - 1]
-            current[index - 1] = temp
+            current[index] = current[targetIndex]
+            current[targetIndex] = temp
             setProviderOrder(current)
         }
     }
 
     /**
-     * Move provider down in ranking (lower priority)
+     * Move provider down in ranking (lower priority).
+     * Skips over disabled providers to swap with the nearest enabled one.
      */
-    fun moveDown(providerId: String) {
+    fun moveDown(providerId: String, isEnabled: (String) -> Boolean) {
         val current = _providerOrder.value.toMutableList()
         val index = current.indexOf(providerId)
-        if (index < current.size - 1) {
+        if (index == -1 || index >= current.size - 1) return
+
+        // Find the nearest enabled provider below this one
+        var targetIndex = -1
+        for (i in index + 1 until current.size) {
+            if (isEnabled(current[i])) {
+                targetIndex = i
+                break
+            }
+        }
+
+        if (targetIndex != -1) {
             val temp = current[index]
-            current[index] = current[index + 1]
-            current[index + 1] = temp
+            current[index] = current[targetIndex]
+            current[targetIndex] = temp
             setProviderOrder(current)
         }
     }

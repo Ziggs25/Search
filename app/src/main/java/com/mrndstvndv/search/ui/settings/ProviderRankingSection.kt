@@ -37,11 +37,16 @@ import androidx.compose.ui.unit.dp
 import com.mrndstvndv.search.provider.ProviderRankingRepository
 
 @Composable
-fun ProviderRankingSection(rankingRepository: ProviderRankingRepository) {
+fun ProviderRankingSection(
+    rankingRepository: ProviderRankingRepository,
+    enabledProviders: Map<String, Boolean>
+) {
     val providerOrder by rankingRepository.providerOrder.collectAsState()
     val useFrequencyRanking by rankingRepository.useFrequencyRanking.collectAsState()
     val resultFrequency by rankingRepository.resultFrequency.collectAsState()
     var showFrequencyDialog by remember { mutableStateOf(false) }
+
+    val visibleProviderOrder = providerOrder.filter { enabledProviders[it] != false }
 
     if (showFrequencyDialog) {
         FrequencyRankingDialog(
@@ -116,15 +121,19 @@ fun ProviderRankingSection(rankingRepository: ProviderRankingRepository) {
                 color = MaterialTheme.colorScheme.surface
             ) {
                 Column {
-                    providerOrder.forEachIndexed { index, providerId ->
+                    visibleProviderOrder.forEachIndexed { index, providerId ->
                         ProviderRankingItem(
                             providerId = providerId,
                             isFirst = index == 0,
-                            isLast = index == providerOrder.size - 1,
-                            onMoveUp = { rankingRepository.moveUp(providerId) },
-                            onMoveDown = { rankingRepository.moveDown(providerId) }
+                            isLast = index == visibleProviderOrder.size - 1,
+                            onMoveUp = {
+                                rankingRepository.moveUp(providerId) { id -> enabledProviders[id] != false }
+                            },
+                            onMoveDown = {
+                                rankingRepository.moveDown(providerId) { id -> enabledProviders[id] != false }
+                            }
                         )
-                        if (index < providerOrder.size - 1) {
+                        if (index < visibleProviderOrder.size - 1) {
                             HorizontalDivider(
                                 modifier = Modifier.padding(horizontal = 20.dp),
                                 color = MaterialTheme.colorScheme.outlineVariant

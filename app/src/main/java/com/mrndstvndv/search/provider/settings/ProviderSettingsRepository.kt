@@ -22,6 +22,7 @@ class ProviderSettingsRepository(context: Context) {
         private const val KEY_ANIMATIONS_ENABLED = "animations_enabled"
         private const val KEY_TEXT_UTILITIES = "text_utilities"
         private const val KEY_FILE_SEARCH = "file_search"
+        private const val KEY_ENABLED_PROVIDERS = "enabled_providers"
         private const val DEFAULT_BACKGROUND_OPACITY = 0.35f
         private const val DEFAULT_BACKGROUND_BLUR_STRENGTH = 0.5f
         private const val DEFAULT_ACTIVITY_INDICATOR_DELAY_MS = 250
@@ -59,6 +60,9 @@ class ProviderSettingsRepository(context: Context) {
 
     private val _fileSearchSettings = MutableStateFlow(loadFileSearchSettings())
     val fileSearchSettings: StateFlow<FileSearchSettings> = _fileSearchSettings
+
+    private val _enabledProviders = MutableStateFlow(loadEnabledProviders())
+    val enabledProviders: StateFlow<Map<String, Boolean>> = _enabledProviders
 
     init {
         preferences.registerOnSharedPreferenceChangeListener(preferenceListener)
@@ -174,6 +178,12 @@ class ProviderSettingsRepository(context: Context) {
         saveFileSearchSettings(current.copy(scanMetadata = updatedMetadata))
     }
 
+    fun setProviderEnabled(providerId: String, enabled: Boolean) {
+        val current = _enabledProviders.value.toMutableMap()
+        current[providerId] = enabled
+        saveEnabledProviders(current)
+    }
+
     private fun loadWebSearchSettings(): WebSearchSettings {
         val json = preferences.getString(KEY_WEB_SEARCH, null) ?: return WebSearchSettings.default()
         return try {
@@ -236,6 +246,31 @@ class ProviderSettingsRepository(context: Context) {
     private fun saveFileSearchSettings(settings: FileSearchSettings) {
         preferences.edit { putString(KEY_FILE_SEARCH, settings.toJsonString()) }
         _fileSearchSettings.value = settings
+    }
+
+    private fun loadEnabledProviders(): Map<String, Boolean> {
+        val json = preferences.getString(KEY_ENABLED_PROVIDERS, null) ?: return emptyMap()
+        return try {
+            val jsonObject = JSONObject(json)
+            val map = mutableMapOf<String, Boolean>()
+            val keys = jsonObject.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                map[key] = jsonObject.getBoolean(key)
+            }
+            map
+        } catch (ignored: JSONException) {
+            emptyMap()
+        }
+    }
+
+    private fun saveEnabledProviders(providers: Map<String, Boolean>) {
+        val jsonObject = JSONObject()
+        providers.forEach { (key, value) ->
+            jsonObject.put(key, value)
+        }
+        preferences.edit { putString(KEY_ENABLED_PROVIDERS, jsonObject.toString()) }
+        _enabledProviders.value = providers
     }
 }
 

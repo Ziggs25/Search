@@ -102,6 +102,7 @@ class MainActivity : ComponentActivity() {
             val backgroundBlurStrength by settingsRepository.backgroundBlurStrength.collectAsState()
             val activityIndicatorDelayMs by settingsRepository.activityIndicatorDelayMs.collectAsState()
             val motionPreferences by settingsRepository.motionPreferences.collectAsState()
+            val enabledProviders by settingsRepository.enabledProviders.collectAsState()
 
             LaunchedEffect(backgroundBlurStrength) {
                 applyWindowBlur(backgroundBlurStrength)
@@ -187,7 +188,9 @@ class MainActivity : ComponentActivity() {
 
                     val aggregated = mutableListOf<ProviderResult>()
                     val seenIds = mutableSetOf<String>()
-                    val matchingProviders = providers.filter { it.canHandle(query) }
+                    val matchingProviders = providers
+                        .filter { enabledProviders[it.id] ?: true }
+                        .filter { it.canHandle(query) }
                     val aliasResult = match?.let { buildAliasResult(it.entry, normalizedText, webSearchSettings) }
 
                     // Use supervisorScope to isolate provider failures
