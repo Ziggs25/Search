@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.provider.DocumentsContract
 import android.provider.Settings
 import android.text.format.DateUtils
 import android.util.Log
@@ -765,6 +766,11 @@ private fun FileSearchRootsCard(
                 metadata = firstErroredRoot.second
             )
         }
+        val duplicateNameIds = settings.roots
+            .groupBy { it.displayName }
+            .filterValues { it.size > 1 }
+            .flatMap { entry -> entry.value.map(FileSearchRoot::id) }
+            .toSet()
         if (settings.roots.isEmpty()) {
             SettingsDivider()
             Text(
@@ -778,8 +784,10 @@ private fun FileSearchRootsCard(
         } else {
             SettingsDivider()
             settings.roots.forEachIndexed { index, root ->
+                val displayName = formatRootDisplayName(root, duplicateNameIds.contains(root.id))
                 FileSearchRootRow(
                     root = root,
+                    displayName = displayName,
                     metadata = scanMetadata[root.id],
                     onToggle = { enabled -> onToggleRoot(root, enabled) },
                     onRescan = { onRescanRoot(root) },
@@ -802,9 +810,16 @@ private fun FileSearchRootsCard(
     }
 }
 
+private fun formatRootDisplayName(root: FileSearchRoot, requireParentLabel: Boolean): String {
+    if (!requireParentLabel) return root.displayName
+    val parent = root.parentDisplayName?.takeIf { it.isNotBlank() } ?: root.uri.deriveParentDisplayName()
+    return if (parent.isNullOrBlank()) root.displayName else "${root.displayName} ($parent)"
+}
+
 @Composable
 private fun FileSearchRootRow(
     root: FileSearchRoot,
+    displayName: String,
     metadata: FileSearchScanMetadata?,
     onToggle: (Boolean) -> Unit,
     onRescan: () -> Unit,
@@ -822,7 +837,7 @@ private fun FileSearchRootRow(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = root.displayName,
+                    text = displayName,
                     style = MaterialTheme.typography.bodyLarge
                 )
                 val (status, detail) = resolveFileSearchStatus(root, metadata)
@@ -1118,16 +1133,40 @@ private fun handleFolderSelection(
         Log.w(FILE_SEARCH_LOG_TAG, "Document tree unavailable for $uri")
         return
     }
+    val parentDisplayName = document.parentDisplayNameOrNull()
     val root = FileSearchRoot(
         id = UUID.randomUUID().toString(),
         uri = uri,
         displayName = document.name ?: document.uri.lastPathSegment ?: "Folder",
         isEnabled = true,
-        addedAtMillis = System.currentTimeMillis()
+        addedAtMillis = System.currentTimeMillis(),
+        parentDisplayName = parentDisplayName
     )
     settingsRepository.addFileSearchRoot(root)
     settingsRepository.updateFileSearchScanState(root.id, FileSearchScanState.INDEXING)
     fileSearchRepository.scheduleFullIndex(root)
+}
+
+private fun DocumentFile.parentDisplayNameOrNull(): String? {
+    parentFile?.name?.takeIf { it.isNotBlank() }?.let { return it }
+    return uri?.deriveParentDisplayName()
+}
+
+private fun Uri?.deriveParentDisplayName(): String? {
+    if (this == null) return null
+    val treeDocId = runCatching { DocumentsContract.getTreeDocumentId(this) }.getOrNull()
+    val candidate = treeDocId ?: path
+    return extractParentSegment(candidate)
+}
+
+private fun extractParentSegment(raw: String?): String? {
+    if (raw.isNullOrBlank()) return null
+    val decoded = Uri.decode(raw)
+    val relative = decoded.substringAfter(':', decoded)
+    val parentPath = relative.substringBeforeLast('/', "")
+    if (parentPath.isBlank()) return null
+    val parent = parentPath.substringAfterLast('/')
+    return parent.takeIf { it.isNotBlank() }
 }
 
 private const val FILE_SEARCH_LOG_TAG = "FileSearchSettings"

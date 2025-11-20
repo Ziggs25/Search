@@ -446,7 +446,8 @@ data class FileSearchRoot(
     val uri: Uri,
     val displayName: String,
     val isEnabled: Boolean = true,
-    val addedAtMillis: Long
+    val addedAtMillis: Long,
+    val parentDisplayName: String? = null
 ) {
     fun toJson(): JSONObject {
         return JSONObject().apply {
@@ -455,6 +456,9 @@ data class FileSearchRoot(
             put("displayName", displayName)
             put("isEnabled", isEnabled)
             put("addedAtMillis", addedAtMillis)
+            if (!parentDisplayName.isNullOrBlank()) {
+                put("parentDisplayName", parentDisplayName)
+            }
         }
     }
 
@@ -467,24 +471,28 @@ data class FileSearchRoot(
             val name = json.optString("displayName").ifBlank { uri.lastPathSegment ?: uriValue }
             val enabled = json.optBoolean("isEnabled", true)
             val addedAt = json.optLong("addedAtMillis", 0L)
+            val parent = json.optString("parentDisplayName").takeIf { it.isNotBlank() }
             return FileSearchRoot(
                 id = id,
                 uri = uri,
                 displayName = name,
                 isEnabled = enabled,
-                addedAtMillis = addedAt
+                addedAtMillis = addedAt,
+                parentDisplayName = parent
             )
         }
 
         fun downloadsRoot(): FileSearchRoot? {
             val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             val uri = directory?.let { Uri.fromFile(it) } ?: return null
+            val parentName = directory.parentFile?.name
             return FileSearchRoot(
                 id = FileSearchSettings.DOWNLOADS_ROOT_ID,
                 uri = uri,
                 displayName = "Downloads",
                 isEnabled = true,
-                addedAtMillis = directory.lastModified()
+                addedAtMillis = directory.lastModified(),
+                parentDisplayName = parentName
             )
         }
     }
