@@ -3,8 +3,10 @@ package com.mrndstvndv.search
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +18,7 @@ import com.mrndstvndv.search.provider.ProviderRankingRepository
 import com.mrndstvndv.search.provider.settings.ProviderSettingsRepository
 import com.mrndstvndv.search.settings.AssistantRoleManager
 import com.mrndstvndv.search.ui.settings.GeneralSettingsScreen
+import com.mrndstvndv.search.ui.settings.WebSearchSettingsScreen
 import com.mrndstvndv.search.ui.theme.SearchTheme
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +28,8 @@ import kotlinx.coroutines.withContext
 class SettingsActivity : ComponentActivity() {
     private val assistantRoleManager by lazy { AssistantRoleManager(this) }
     private val defaultAssistantState = mutableStateOf(false)
+
+    private enum class Screen { General, WebSearch }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -38,21 +43,39 @@ class SettingsActivity : ComponentActivity() {
             val rankingRepository = remember { ProviderRankingRepository.getInstance(this@SettingsActivity) }
             val isDefaultAssistant by defaultAssistantState
             val motionPreferences by settingsRepository.motionPreferences.collectAsState()
+            val webSearchSettings by settingsRepository.webSearchSettings.collectAsState()
+            var currentScreen by remember { mutableStateOf(Screen.General) }
             val appName = getString(R.string.app_name)
             SearchTheme(motionPreferences = motionPreferences) {
                 LaunchedEffect(Unit) {
                     refreshDefaultAssistantState()
                 }
-                GeneralSettingsScreen(
-                    aliasRepository = aliasRepository,
-                    settingsRepository = settingsRepository,
-                    fileSearchRepository = fileSearchRepository,
-                    rankingRepository = rankingRepository,
-                    appName = appName,
-                    isDefaultAssistant = isDefaultAssistant,
-                    onRequestSetDefaultAssistant = { assistantRoleManager.launchDefaultAssistantSettings() },
-                    onClose = { finish() }
-                )
+                when (currentScreen) {
+                    Screen.General -> {
+                        GeneralSettingsScreen(
+                            aliasRepository = aliasRepository,
+                            settingsRepository = settingsRepository,
+                            fileSearchRepository = fileSearchRepository,
+                            rankingRepository = rankingRepository,
+                            appName = appName,
+                            isDefaultAssistant = isDefaultAssistant,
+                            onRequestSetDefaultAssistant = { assistantRoleManager.launchDefaultAssistantSettings() },
+                            onOpenWebSearchSettings = { currentScreen = Screen.WebSearch },
+                            onClose = { finish() }
+                        )
+                    }
+                    Screen.WebSearch -> {
+                        BackHandler { currentScreen = Screen.General }
+                        WebSearchSettingsScreen(
+                            initialSettings = webSearchSettings,
+                            onBack = { currentScreen = Screen.General },
+                            onSave = { newSettings ->
+                                settingsRepository.saveWebSearchSettings(newSettings)
+                                currentScreen = Screen.General
+                            }
+                        )
+                    }
+                }
             }
         }
     }

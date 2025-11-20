@@ -10,6 +10,7 @@ import android.text.format.DateUtils
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -80,6 +81,7 @@ fun GeneralSettingsScreen(
     appName: String,
     isDefaultAssistant: Boolean,
     onRequestSetDefaultAssistant: () -> Unit,
+    onOpenWebSearchSettings: () -> Unit,
     onClose: () -> Unit
 ) {
     val aliasEntries by aliasRepository.aliases.collectAsState()
@@ -104,7 +106,6 @@ fun GeneralSettingsScreen(
             )
         }
     }
-    var showWebSearchDialog by remember { mutableStateOf(false) }
     val downloadsMetadata = fileSearchSettings.scanMetadata[FileSearchSettings.DOWNLOADS_ROOT_ID]
     var downloadsPermissionGranted by remember { mutableStateOf(hasAllFilesAccess()) }
     var showDownloadsPermissionDialog by remember { mutableStateOf(false) }
@@ -221,7 +222,7 @@ fun GeneralSettingsScreen(
                         SettingsActionRow(
                             title = "Search providers",
                             subtitle = "Choose which engines appear on the sheet.",
-                            onClick = { showWebSearchDialog = true }
+                            onClick = onOpenWebSearchSettings
                         )
                     }
                 }
@@ -373,17 +374,6 @@ fun GeneralSettingsScreen(
         }
     }
 
-    if (showWebSearchDialog) {
-        WebSearchProviderSettingsDialog(
-            initialSettings = webSearchSettings,
-            onDismiss = { showWebSearchDialog = false },
-            onSave = { newSettings ->
-                settingsRepository.saveWebSearchSettings(newSettings)
-                showWebSearchDialog = false
-            }
-        )
-    }
-
     if (showDownloadsPermissionDialog) {
         DownloadsPermissionDialog(
             onDismiss = {
@@ -485,6 +475,7 @@ private fun SettingsActionRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.extraLarge)
+            .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 18.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

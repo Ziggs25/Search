@@ -1,10 +1,12 @@
 package com.mrndstvndv.search.ui.settings
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -51,92 +53,83 @@ fun ProviderRankingSection(rankingRepository: ProviderRankingRepository) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(
-            text = "Provider Order",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 8.dp)
+            text = "Result Ranking",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.secondary
         )
         Text(
-            text = "Control how providers are ranked in search results",
+            text = "Control how results are ordered.",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 16.dp)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Toggle for frequency-based ranking
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            shape = MaterialTheme.shapes.medium,
-            tonalElevation = 4.dp,
-            color = MaterialTheme.colorScheme.surfaceVariant
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Column(modifier = Modifier.padding(top = 12.dp, bottom = 16.dp)) {
+            // Toggle for frequency-based ranking
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = 2.dp,
+                color = MaterialTheme.colorScheme.surface
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Use frequency-based ranking",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = if (useFrequencyRanking) "Most used items appear first" else "Manual provider order",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showFrequencyModal = true }
+                        .padding(horizontal = 20.dp, vertical = 18.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Use frequency-based ranking",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = if (useFrequencyRanking) "Most used items appear first" else "Provider order",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = useFrequencyRanking,
+                        onCheckedChange = { rankingRepository.setUseFrequencyRanking(it) }
                     )
                 }
-                Switch(
-                    checked = useFrequencyRanking,
-                    onCheckedChange = { rankingRepository.setUseFrequencyRanking(it) }
-                )
             }
-        }
 
-        // View frequency data button (only show if frequency ranking is enabled)
-        if (useFrequencyRanking && resultFrequency.isNotEmpty()) {
-            TextButton(
-                onClick = { showFrequencyModal = true },
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(bottom = 12.dp)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Provider order",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = 2.dp,
+                color = MaterialTheme.colorScheme.surface
             ) {
-                Text(text = "View frequency data (${resultFrequency.size})")
-            }
-        }
-
-        Text(
-            text = "Manual provider order",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    shape = MaterialTheme.shapes.medium
-                ),
-            verticalArrangement = Arrangement.spacedBy(1.dp)
-        ) {
-            providerOrder.forEachIndexed { index, providerId ->
-                ProviderRankingItem(
-                    providerId = providerId,
-                    isFirst = index == 0,
-                    isLast = index == providerOrder.size - 1,
-                    onMoveUp = { rankingRepository.moveUp(providerId) },
-                    onMoveDown = { rankingRepository.moveDown(providerId) }
-                )
-                if (index < providerOrder.size - 1) {
-                    HorizontalDivider(thickness = 1.dp)
+                Column {
+                    providerOrder.forEachIndexed { index, providerId ->
+                        ProviderRankingItem(
+                            providerId = providerId,
+                            isFirst = index == 0,
+                            isLast = index == providerOrder.size - 1,
+                            onMoveUp = { rankingRepository.moveUp(providerId) },
+                            onMoveDown = { rankingRepository.moveDown(providerId) }
+                        )
+                        if (index < providerOrder.size - 1) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -265,48 +258,42 @@ private fun ProviderRankingItem(
 ) {
     val displayName = getProviderDisplayName(providerId)
 
-    Surface(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = displayName,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f)
-            )
+        Text(
+            text = displayName,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
 
-            Row {
-                IconButton(
-                    onClick = onMoveUp,
-                    enabled = !isFirst,
-                    modifier = Modifier.width(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.ArrowUpward,
-                        contentDescription = "Move up",
-                        modifier = Modifier.width(16.dp)
-                    )
-                }
+        Row {
+            IconButton(
+                onClick = onMoveUp,
+                enabled = !isFirst,
+                modifier = Modifier.width(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowUpward,
+                    contentDescription = "Move up",
+                    modifier = Modifier.width(16.dp)
+                )
+            }
 
-                IconButton(
-                    onClick = onMoveDown,
-                    enabled = !isLast,
-                    modifier = Modifier.width(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.ArrowDownward,
-                        contentDescription = "Move down",
-                        modifier = Modifier.width(16.dp)
-                    )
-                }
+            IconButton(
+                onClick = onMoveDown,
+                enabled = !isLast,
+                modifier = Modifier.width(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowDownward,
+                    contentDescription = "Move down",
+                    modifier = Modifier.width(16.dp)
+                )
             }
         }
     }
