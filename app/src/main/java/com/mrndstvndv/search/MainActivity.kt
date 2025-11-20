@@ -65,16 +65,16 @@ import com.mrndstvndv.search.provider.settings.WebSearchSettings
 import com.mrndstvndv.search.provider.text.TextUtilitiesProvider
 import com.mrndstvndv.search.provider.web.WebSearchProvider
 import com.mrndstvndv.search.ui.components.ItemsList
-import com.mrndstvndv.search.ui.components.ProviderLoadingStatus
-import com.mrndstvndv.search.ui.components.ProviderLoadingStatusRow
 import com.mrndstvndv.search.ui.components.SearchField
 import com.mrndstvndv.search.ui.settings.AliasCreationDialog
 import com.mrndstvndv.search.ui.theme.SearchTheme
 import com.mrndstvndv.search.ui.theme.motionAwareVisibility
 import com.mrndstvndv.search.ui.theme.rememberMotionAwareFloat
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
@@ -121,10 +121,16 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+
+            // Pre-initialize heavy providers on first composition
+            LaunchedEffect(Unit) {
+                withContext(Dispatchers.Default) {
+                    providers.forEach { it.initialize() }
+                }
+            }
             val providerResults = remember { mutableStateListOf<ProviderResult>() }
-            val providerLoadingStates = remember { mutableStateMapOf<String, ProviderLoadingStatus>() }
-            val providerLoadingIndicatorScope = rememberCoroutineScope()
             var shouldShowResults by remember { mutableStateOf(false) }
+            var pendingQueryJob by remember { mutableStateOf<Job?>(null) }
 
             var aliasDialogCandidate by remember { mutableStateOf<AliasCreationCandidate?>(null) }
             var aliasDialogValue by remember { mutableStateOf("") }
@@ -165,52 +171,59 @@ class MainActivity : ComponentActivity() {
             }
 
             LaunchedEffect(textState.value.text, aliasEntries, webSearchSettings) {
-                val currentText = textState.value.text
-                val match = aliasRepository.matchAlias(currentText)
-                val normalizedText = match?.remainingQuery ?: currentText
-                val query = Query(normalizedText, originalText = currentText)
-                providerLoadingStates.clear()
+                // Cancel previous query job to debounce typing
+                pendingQueryJob?.cancel()
+                
+                pendingQueryJob = launch {
+                    // Minimal debounce: 50ms to reduce jank while still batching keystrokes
+                    delay(50)
+                    
+                    val currentText = textState.value.text
+                    val match = aliasRepository.matchAlias(currentText)
+                    val normalizedText = match?.remainingQuery ?: currentText
+                    val query = Query(normalizedText, originalText = currentText)
 
-                val aggregated = mutableListOf<ProviderResult>()
-                val matchingProviders = providers.filter { it.canHandle(query) }
-                matchingProviders.forEach { provider ->
-                    val delayDurationMs = activityIndicatorDelayMs.coerceAtLeast(0)
-                    providerLoadingStates[provider.id] = ProviderLoadingStatus(
-                        id = provider.id,
-                        displayName = provider.displayName,
-                        isLoading = true,
-                        showAfterDelay = false
-                    )
-                    providerLoadingIndicatorScope.launch {
-                        if (delayDurationMs > 0) {
-                            delay(delayDurationMs.toLong())
-                        }
-                        providerLoadingStates[provider.id]?.let { status ->
-                            if (status.isLoading) {
-                                providerLoadingStates[provider.id] = status.copy(showAfterDelay = true)
+                    val aggregated = mutableListOf<ProviderResult>()
+                    val seenIds = mutableSetOf<String>()
+                    val matchingProviders = providers.filter { it.canHandle(query) }
+                    val aliasResult = match?.let { buildAliasResult(it.entry, normalizedText, webSearchSettings) }
+
+                    // Use supervisorScope to isolate provider failures
+                    supervisorScope {
+                        matchingProviders.forEach { provider ->
+                            launch {
+                                try {
+                                    val results = withContext(Dispatchers.IO) { provider.query(query) }
+                                    val newItems = results.filterNot { seenIds.contains(it.id) }
+                                    if (newItems.isNotEmpty()) {
+                                        newItems.forEach { seenIds.add(it.id) }
+                                        aggregated += newItems
+                                    }
+                                } catch (error: Exception) {
+                                    // Silently ignore individual provider failures
+                                }
                             }
                         }
                     }
-                    val providerResult = try {
-                        withContext(Dispatchers.Default) {
-                            provider.query(query)
-                        }
-                    } catch (error: Throwable) {
-                        emptyList()
-                    } finally {
-                        providerLoadingStates.remove(provider.id)
-                    }
-                    aggregated += providerResult
-                }
 
-                val filtered = match?.entry?.target?.let { aliasTarget ->
-                    aggregated.filterNot { it.aliasTarget == aliasTarget }
-                } ?: aggregated
-                val aliasResult = match?.let { buildAliasResult(it.entry, normalizedText, webSearchSettings) }
-                providerResults.clear()
-                aliasResult?.let { providerResults.add(it) }
-                providerResults.addAll(filtered)
-                shouldShowResults = normalizedText.isNotBlank() || match != null
+                    // Final update after all providers complete - only if results changed
+                    val filtered = match?.entry?.target?.let { aliasTarget ->
+                        aggregated.filterNot { it.aliasTarget == aliasTarget }
+                    } ?: aggregated
+                    
+                    val newResults = buildList {
+                        aliasResult?.let { add(it) }
+                        addAll(filtered)
+                    }
+                    
+                    // Only update UI if results actually changed
+                    if (providerResults != newResults) {
+                        providerResults.clear()
+                        providerResults.addAll(newResults)
+                    }
+                    
+                    shouldShowResults = normalizedText.isNotBlank() || match != null
+                }
             }
 
             SearchTheme(motionPreferences = motionPreferences) {
@@ -282,14 +295,6 @@ class MainActivity : ComponentActivity() {
                             }
                             Spacer(modifier = Modifier.height(6.dp))
                         }
-
-                        val providerStatusList = providers.mapNotNull { providerLoadingStates[it.id] }
-                        ProviderLoadingStatusRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 6.dp),
-                            statuses = providerStatusList
-                        )
 
                         if (!hasVisibleResults) {
                             Spacer(Modifier.weight(spacerWeight))

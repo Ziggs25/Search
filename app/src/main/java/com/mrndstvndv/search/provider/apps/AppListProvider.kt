@@ -37,7 +37,6 @@ class AppListProvider(
         val results = mutableListOf<ProviderResult>()
 
         for (entry in limited) {
-            val icon = loadIcon(entry.packageName)
             val action: suspend () -> Unit = {
                 withContext(Dispatchers.Main) {
                     val launchIntent = packageManager.getLaunchIntentForPackage(entry.packageName)
@@ -51,7 +50,8 @@ class AppListProvider(
                 id = "$id:${entry.packageName}",
                 title = entry.label,
                 subtitle = entry.packageName,
-                icon = icon,
+                icon = null,
+                iconLoader = { loadIcon(entry.packageName) },
                 providerId = id,
                 extras = mapOf(EXTRA_PACKAGE_NAME to entry.packageName),
                 onSelect = action,
