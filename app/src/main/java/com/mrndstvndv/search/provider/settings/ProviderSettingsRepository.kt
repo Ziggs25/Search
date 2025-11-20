@@ -110,6 +110,12 @@ class ProviderSettingsRepository(context: Context) {
         saveFileSearchSettings(current.copy(includeDownloads = enabled))
     }
 
+    fun setFileSearchThumbnailsEnabled(enabled: Boolean) {
+        val current = _fileSearchSettings.value
+        if (current.loadThumbnails == enabled) return
+        saveFileSearchSettings(current.copy(loadThumbnails = enabled))
+    }
+
     fun addFileSearchRoot(root: FileSearchRoot) {
         val current = _fileSearchSettings.value
         if (current.roots.any { it.id == root.id }) return
@@ -362,7 +368,8 @@ data class TextUtilitiesSettings(
 data class FileSearchSettings(
     val roots: List<FileSearchRoot>,
     val scanMetadata: Map<String, FileSearchScanMetadata>,
-    val includeDownloads: Boolean
+    val includeDownloads: Boolean,
+    val loadThumbnails: Boolean
 ) {
     fun toJsonString(): String {
         val json = JSONObject()
@@ -375,6 +382,7 @@ data class FileSearchSettings(
         }
         json.put("metadata", metadata)
         json.put("includeDownloads", includeDownloads)
+        json.put("loadThumbnails", loadThumbnails)
         return json.toString()
     }
 
@@ -385,7 +393,12 @@ data class FileSearchSettings(
     companion object {
         const val DOWNLOADS_ROOT_ID = "downloads-root"
 
-        fun empty(): FileSearchSettings = FileSearchSettings(emptyList(), emptyMap(), includeDownloads = false)
+        fun empty(): FileSearchSettings = FileSearchSettings(
+            roots = emptyList(),
+            scanMetadata = emptyMap(),
+            includeDownloads = false,
+            loadThumbnails = true
+        )
 
         fun fromJson(json: JSONObject?): FileSearchSettings? {
             if (json == null) return empty()
@@ -405,7 +418,13 @@ data class FileSearchSettings(
                 if (parsed != null) metadata[key] = parsed
             }
             val includeDownloads = json.optBoolean("includeDownloads", false)
-            return FileSearchSettings(roots = roots, scanMetadata = metadata, includeDownloads = includeDownloads)
+            val loadThumbnails = json.optBoolean("loadThumbnails", true)
+            return FileSearchSettings(
+                roots = roots,
+                scanMetadata = metadata,
+                includeDownloads = includeDownloads,
+                loadThumbnails = loadThumbnails
+            )
         }
     }
 }

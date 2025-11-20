@@ -234,6 +234,13 @@ fun GeneralSettingsScreen(
                     subtitle = "Pick which directories are indexed for local search results."
                 ) {
                     SettingsCardGroup {
+                        SettingsToggleRow(
+                            title = "Load thumbnails",
+                            subtitle = "Show previews for images, videos, and audio files in search results.",
+                            checked = fileSearchSettings.loadThumbnails,
+                            onCheckedChange = { settingsRepository.setFileSearchThumbnailsEnabled(it) }
+                        )
+                        SettingsDivider()
                         FileSearchRootsCard(
                             settings = fileSearchSettings,
                             scanMetadata = fileSearchSettings.scanMetadata,

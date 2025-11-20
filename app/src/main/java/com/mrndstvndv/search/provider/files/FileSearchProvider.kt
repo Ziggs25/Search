@@ -52,6 +52,7 @@ class FileSearchProvider(
         val normalized = query.trimmedText
         if (normalized.isBlank()) return emptyList()
         val settings = settingsRepository.fileSearchSettings.value
+        val thumbnailsEnabled = settings.loadThumbnails
         val potentialRoots = settings.enabledRoots().map { it.id }.toMutableList()
         if (settings.includeDownloads && hasDownloadsPermission()) {
             potentialRoots += FileSearchSettings.DOWNLOADS_ROOT_ID
@@ -62,7 +63,7 @@ class FileSearchProvider(
         val lowerQuery = normalized.lowercase()
         val results = mutableListOf<ProviderResult>()
         for (match in matches) {
-            val iconDescriptor = resolveIcons(match)
+            val iconDescriptor = resolveIcons(match, thumbnailsEnabled)
             results += ProviderResult(
                 id = "$id:${match.documentUri.hashCode()}",
                 title = match.displayName,
@@ -90,26 +91,32 @@ class FileSearchProvider(
         }
     }
 
-    private fun resolveIcons(match: FileSearchMatch): IconDescriptor {
+    private fun resolveIcons(match: FileSearchMatch, thumbnailsEnabled: Boolean): IconDescriptor {
         if (match.isDirectory) return IconDescriptor(folderIcon, null)
         val mime = match.mimeType?.lowercase()
         val extension = match.displayName.substringAfterLast('.', "").lowercase()
         if (isImageFile(mime, extension)) {
             return IconDescriptor(
                 vectorIcon = imageIcon,
-                iconLoader = { thumbnailRepository.loadThumbnail(match.documentUri, match.lastModified, ThumbnailType.IMAGE) }
+                iconLoader = if (thumbnailsEnabled) {
+                    { thumbnailRepository.loadThumbnail(match.documentUri, match.lastModified, ThumbnailType.IMAGE) }
+                } else null
             )
         }
         if (isVideoFile(mime, extension)) {
             return IconDescriptor(
                 vectorIcon = videoIcon,
-                iconLoader = { thumbnailRepository.loadThumbnail(match.documentUri, match.lastModified, ThumbnailType.VIDEO) }
+                iconLoader = if (thumbnailsEnabled) {
+                    { thumbnailRepository.loadThumbnail(match.documentUri, match.lastModified, ThumbnailType.VIDEO) }
+                } else null
             )
         }
         if (isAudioFile(mime, extension)) {
             return IconDescriptor(
                 vectorIcon = musicIcon,
-                iconLoader = { thumbnailRepository.loadThumbnail(match.documentUri, match.lastModified, ThumbnailType.AUDIO) }
+                iconLoader = if (thumbnailsEnabled) {
+                    { thumbnailRepository.loadThumbnail(match.documentUri, match.lastModified, ThumbnailType.AUDIO) }
+                } else null
             )
         }
         if (isApkFile(mime, extension)) return IconDescriptor(apkIcon, null)
