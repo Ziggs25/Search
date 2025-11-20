@@ -54,7 +54,6 @@ import com.mrndstvndv.search.alias.AppLaunchAliasTarget
 import com.mrndstvndv.search.alias.WebSearchAliasTarget
 import com.mrndstvndv.search.provider.apps.AppListProvider
 import com.mrndstvndv.search.provider.calculator.CalculatorProvider
-import com.mrndstvndv.search.provider.debug.DebugLongOperationProvider
 import com.mrndstvndv.search.provider.files.FileSearchProvider
 import com.mrndstvndv.search.provider.files.FileSearchRepository
 import com.mrndstvndv.search.provider.files.FileThumbnailRepository
@@ -120,9 +119,6 @@ class MainActivity : ComponentActivity() {
                     add(TextUtilitiesProvider(this@MainActivity, settingsRepository))
                     add(FileSearchProvider(this@MainActivity, settingsRepository, fileSearchRepository, fileThumbnailRepository))
                     add(WebSearchProvider(this@MainActivity, settingsRepository))
-                    if (BuildConfig.DEBUG) {
-                        add(DebugLongOperationProvider(this@MainActivity))
-                    }
                 }
             }
 
