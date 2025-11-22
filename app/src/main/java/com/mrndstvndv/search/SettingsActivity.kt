@@ -5,6 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +41,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalAnimationApi::class)
 class SettingsActivity : ComponentActivity() {
     private val assistantRoleManager by lazy { AssistantRoleManager(this) }
     private val defaultAssistantState = mutableStateOf(false)
@@ -77,7 +86,23 @@ class SettingsActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     refreshDefaultAssistantState()
                 }
-                when (currentScreen) {
+                AnimatedContent(
+                    targetState = currentScreen,
+                    label = "settings_nav",
+                    transitionSpec = {
+                        val direction = if (targetState.ordinal >= initialState.ordinal) 1 else -1
+                        slideInHorizontally(
+                            animationSpec = tween(durationMillis = 220)
+                        ) { fullWidth -> fullWidth * direction } + fadeIn(
+                            animationSpec = tween(durationMillis = 180)
+                        ) togetherWith slideOutHorizontally(
+                            animationSpec = tween(durationMillis = 220)
+                        ) { fullWidth -> -fullWidth * direction } + fadeOut(
+                            animationSpec = tween(durationMillis = 180)
+                        )
+                    }
+                ) { screen ->
+                    when (screen) {
                     Screen.Home -> {
                         GeneralSettingsScreen(
                             aliasRepository = aliasRepository,
@@ -193,6 +218,7 @@ class SettingsActivity : ComponentActivity() {
                             onOpenTextUtilitiesSettings = { currentScreen = Screen.TextUtilities }
                         )
                     }
+                }
                 }
             }
         }
