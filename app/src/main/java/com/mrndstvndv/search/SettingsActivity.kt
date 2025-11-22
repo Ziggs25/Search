@@ -18,6 +18,11 @@ import com.mrndstvndv.search.provider.ProviderRankingRepository
 import com.mrndstvndv.search.provider.settings.ProviderSettingsRepository
 import com.mrndstvndv.search.settings.AssistantRoleManager
 import com.mrndstvndv.search.ui.settings.GeneralSettingsScreen
+import com.mrndstvndv.search.ui.settings.ProvidersSettingsScreen
+import com.mrndstvndv.search.ui.settings.AppearanceSettingsScreen
+import com.mrndstvndv.search.ui.settings.BehaviorSettingsScreen
+import com.mrndstvndv.search.ui.settings.AliasesSettingsScreen
+import com.mrndstvndv.search.ui.settings.ResultRankingSettingsScreen
 import com.mrndstvndv.search.ui.settings.WebSearchSettingsScreen
 import com.mrndstvndv.search.ui.settings.FileSearchSettingsScreen
 import com.mrndstvndv.search.ui.settings.TextUtilitiesSettingsScreen
@@ -32,7 +37,18 @@ class SettingsActivity : ComponentActivity() {
     private val assistantRoleManager by lazy { AssistantRoleManager(this) }
     private val defaultAssistantState = mutableStateOf(false)
 
-    private enum class Screen { General, WebSearch, FileSearch, TextUtilities, ProviderList }
+    private enum class Screen {
+        Home,
+        Providers,
+        Appearance,
+        Behavior,
+        Aliases,
+        Ranking,
+        WebSearch,
+        FileSearch,
+        TextUtilities,
+        ProviderList
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -50,8 +66,8 @@ class SettingsActivity : ComponentActivity() {
             
             val initialScreen = remember {
                 when (intent.getStringExtra(EXTRA_SCREEN)) {
-                    SCREEN_PROVIDERS -> Screen.ProviderList
-                    else -> Screen.General
+                    SCREEN_PROVIDERS -> Screen.Providers
+                    else -> Screen.Home
                 }
             }
             var currentScreen by remember { mutableStateOf(initialScreen) }
@@ -62,7 +78,7 @@ class SettingsActivity : ComponentActivity() {
                     refreshDefaultAssistantState()
                 }
                 when (currentScreen) {
-                    Screen.General -> {
+                    Screen.Home -> {
                         GeneralSettingsScreen(
                             aliasRepository = aliasRepository,
                             settingsRepository = settingsRepository,
@@ -70,16 +86,98 @@ class SettingsActivity : ComponentActivity() {
                             appName = appName,
                             isDefaultAssistant = isDefaultAssistant,
                             onRequestSetDefaultAssistant = { assistantRoleManager.launchDefaultAssistantSettings() },
+                            onOpenProviders = { currentScreen = Screen.Providers },
+                            onOpenAppearance = { currentScreen = Screen.Appearance },
+                            onOpenBehavior = { currentScreen = Screen.Behavior },
+                            onOpenAliases = { currentScreen = Screen.Aliases },
+                            onOpenResultRanking = { currentScreen = Screen.Ranking },
+                            onClose = { finish() }
+                        )
+                    }
+                    Screen.Providers -> {
+                        BackHandler {
+                            if (initialScreen == Screen.Providers) {
+                                finish()
+                            } else {
+                                currentScreen = Screen.Home
+                            }
+                        }
+                        ProvidersSettingsScreen(
+                            settingsRepository = settingsRepository,
+                            appName = appName,
+                            isDefaultAssistant = isDefaultAssistant,
+                            onRequestSetDefaultAssistant = { assistantRoleManager.launchDefaultAssistantSettings() },
                             onOpenWebSearchSettings = { currentScreen = Screen.WebSearch },
                             onOpenFileSearchSettings = { currentScreen = Screen.FileSearch },
                             onOpenTextUtilitiesSettings = { currentScreen = Screen.TextUtilities },
-                            onClose = { finish() }
+                            onBack = {
+                                if (initialScreen == Screen.Providers) {
+                                    finish()
+                                } else {
+                                    currentScreen = Screen.Home
+                                }
+                            }
+                        )
+                    }
+                    Screen.Appearance -> {
+                        BackHandler { currentScreen = Screen.Home }
+                        AppearanceSettingsScreen(
+                            settingsRepository = settingsRepository,
+                            onBack = { currentScreen = Screen.Home }
+                        )
+                    }
+                    Screen.Behavior -> {
+                        BackHandler { currentScreen = Screen.Home }
+                        BehaviorSettingsScreen(
+                            settingsRepository = settingsRepository,
+                            onBack = { currentScreen = Screen.Home }
+                        )
+                    }
+                    Screen.Aliases -> {
+                        BackHandler { currentScreen = Screen.Home }
+                        AliasesSettingsScreen(
+                            aliasRepository = aliasRepository,
+                            onBack = { currentScreen = Screen.Home }
+                        )
+                    }
+                    Screen.Ranking -> {
+                        BackHandler { currentScreen = Screen.Home }
+                        ResultRankingSettingsScreen(
+                            rankingRepository = rankingRepository,
+                            settingsRepository = settingsRepository,
+                            onBack = { currentScreen = Screen.Home }
+                        )
+                    }
+                    Screen.WebSearch -> {
+                        BackHandler { currentScreen = Screen.Providers }
+                        WebSearchSettingsScreen(
+                            initialSettings = webSearchSettings,
+                            onBack = { currentScreen = Screen.Providers },
+                            onSave = { newSettings ->
+                                settingsRepository.saveWebSearchSettings(newSettings)
+                                currentScreen = Screen.Providers
+                            }
+                        )
+                    }
+                    Screen.FileSearch -> {
+                        BackHandler { currentScreen = Screen.Providers }
+                        FileSearchSettingsScreen(
+                            settingsRepository = settingsRepository,
+                            fileSearchRepository = fileSearchRepository,
+                            onBack = { currentScreen = Screen.Providers }
+                        )
+                    }
+                    Screen.TextUtilities -> {
+                        BackHandler { currentScreen = Screen.Providers }
+                        TextUtilitiesSettingsScreen(
+                            settingsRepository = settingsRepository,
+                            onBack = { currentScreen = Screen.Providers }
                         )
                     }
                     Screen.ProviderList -> {
                         // Legacy/Deep-link support if needed, or can be removed if unused
                         if (initialScreen != Screen.ProviderList) {
-                            BackHandler { currentScreen = Screen.General }
+                            BackHandler { currentScreen = Screen.Home }
                         }
                         ProviderListScreen(
                             settingsRepository = settingsRepository,
@@ -87,38 +185,12 @@ class SettingsActivity : ComponentActivity() {
                                 if (initialScreen == Screen.ProviderList) {
                                     finish()
                                 } else {
-                                    currentScreen = Screen.General
+                                    currentScreen = Screen.Home
                                 }
                             },
                             onOpenWebSearchSettings = { currentScreen = Screen.WebSearch },
                             onOpenFileSearchSettings = { currentScreen = Screen.FileSearch },
                             onOpenTextUtilitiesSettings = { currentScreen = Screen.TextUtilities }
-                        )
-                    }
-                    Screen.WebSearch -> {
-                        BackHandler { currentScreen = Screen.General }
-                        WebSearchSettingsScreen(
-                            initialSettings = webSearchSettings,
-                            onBack = { currentScreen = Screen.General },
-                            onSave = { newSettings ->
-                                settingsRepository.saveWebSearchSettings(newSettings)
-                                currentScreen = Screen.General
-                            }
-                        )
-                    }
-                    Screen.FileSearch -> {
-                        BackHandler { currentScreen = Screen.General }
-                        FileSearchSettingsScreen(
-                            settingsRepository = settingsRepository,
-                            fileSearchRepository = fileSearchRepository,
-                            onBack = { currentScreen = Screen.General }
-                        )
-                    }
-                    Screen.TextUtilities -> {
-                        BackHandler { currentScreen = Screen.General }
-                        TextUtilitiesSettingsScreen(
-                            settingsRepository = settingsRepository,
-                            onBack = { currentScreen = Screen.General }
                         )
                     }
                 }
