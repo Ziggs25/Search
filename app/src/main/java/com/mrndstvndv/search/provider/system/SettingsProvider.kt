@@ -1,0 +1,125 @@
+package com.mrndstvndv.search.provider.system
+
+import android.content.Intent
+import android.provider.Settings
+import androidx.activity.ComponentActivity
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
+import com.mrndstvndv.search.provider.Provider
+import com.mrndstvndv.search.provider.model.ProviderResult
+import com.mrndstvndv.search.provider.model.Query
+import com.mrndstvndv.search.provider.settings.ProviderSettingsRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+class SettingsProvider(
+    private val activity: ComponentActivity,
+    private val settingsRepository: ProviderSettingsRepository
+) : Provider {
+
+    override val id: String = "system-settings"
+    override val displayName: String = "System Settings"
+
+    private val settingsActions = listOf(
+        "Settings" to Settings.ACTION_SETTINGS,
+        "Accessibility" to Settings.ACTION_ACCESSIBILITY_SETTINGS,
+        "Airplane mode" to Settings.ACTION_AIRPLANE_MODE_SETTINGS,
+        "Access Point Names" to Settings.ACTION_APN_SETTINGS,
+        "App info" to Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        "Developer options" to Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS,
+        "Apps" to Settings.ACTION_APPLICATION_SETTINGS,
+        "App Search" to Settings.ACTION_APP_SEARCH_SETTINGS,
+        "Battery Saver" to Settings.ACTION_BATTERY_SAVER_SETTINGS,
+        "Biometric Enrollment" to Settings.ACTION_BIOMETRIC_ENROLL,
+        "Bluetooth" to Settings.ACTION_BLUETOOTH_SETTINGS,
+        "Captioning" to Settings.ACTION_CAPTIONING_SETTINGS,
+        "Cast" to Settings.ACTION_CAST_SETTINGS,
+        "Data Roaming" to Settings.ACTION_DATA_ROAMING_SETTINGS,
+        "Data Usage" to Settings.ACTION_DATA_USAGE_SETTINGS,
+        "Date & time" to Settings.ACTION_DATE_SETTINGS,
+        "About phone" to Settings.ACTION_DEVICE_INFO_SETTINGS,
+        "Display" to Settings.ACTION_DISPLAY_SETTINGS,
+        "Screen saver" to Settings.ACTION_DREAM_SETTINGS,
+        "Physical keyboard" to Settings.ACTION_HARD_KEYBOARD_SETTINGS,
+        "Default home app" to Settings.ACTION_HOME_SETTINGS,
+        "Battery optimization" to Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS,
+        "On-screen keyboard" to Settings.ACTION_INPUT_METHOD_SETTINGS,
+        "Input Method Subtype" to Settings.ACTION_INPUT_METHOD_SUBTYPE_SETTINGS,
+        "Storage" to Settings.ACTION_INTERNAL_STORAGE_SETTINGS,
+        "Language" to Settings.ACTION_LOCALE_SETTINGS,
+        "Location" to Settings.ACTION_LOCATION_SOURCE_SETTINGS,
+        "All apps" to Settings.ACTION_MANAGE_ALL_APPLICATIONS_SETTINGS,
+        "Manage Applications" to Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS,
+        "Default apps" to Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS,
+        "Display over other apps" to Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+        "Install unknown apps" to Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+        "Modify system settings" to Settings.ACTION_MANAGE_WRITE_SETTINGS,
+        "Memory card" to Settings.ACTION_MEMORY_CARD_SETTINGS,
+        "Network operators" to Settings.ACTION_NETWORK_OPERATOR_SETTINGS,
+        "Android Beam" to Settings.ACTION_NFCSHARING_SETTINGS,
+        "Tap & pay" to Settings.ACTION_NFC_PAYMENT_SETTINGS,
+        "NFC" to Settings.ACTION_NFC_SETTINGS,
+        "Night Light" to Settings.ACTION_NIGHT_DISPLAY_SETTINGS,
+        "Notification Assistant" to Settings.ACTION_NOTIFICATION_ASSISTANT_SETTINGS,
+        "Notification access" to Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS,
+        "Do Not Disturb access" to Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS,
+        "Printing" to Settings.ACTION_PRINT_SETTINGS,
+        "Privacy" to Settings.ACTION_PRIVACY_SETTINGS,
+        "Quick Access Wallet" to Settings.ACTION_QUICK_ACCESS_WALLET_SETTINGS,
+        "Quick Launch" to Settings.ACTION_QUICK_LAUNCH_SETTINGS,
+        "Ignore Battery Optimizations" to Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+        "Autofill Service" to Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE,
+        "Search" to Settings.ACTION_SEARCH_SETTINGS,
+        "Security" to Settings.ACTION_SECURITY_SETTINGS,
+        "Regulatory info" to Settings.ACTION_SHOW_REGULATORY_INFO,
+        "Sound & vibration" to Settings.ACTION_SOUND_SETTINGS,
+        "Storage Volume Access" to Settings.ACTION_STORAGE_VOLUME_ACCESS_SETTINGS,
+        "Accounts" to Settings.ACTION_SYNC_SETTINGS,
+        "Usage access" to Settings.ACTION_USAGE_ACCESS_SETTINGS,
+        "Personal dictionary" to Settings.ACTION_USER_DICTIONARY_SETTINGS,
+        "Voice input" to Settings.ACTION_VOICE_INPUT_SETTINGS,
+        "VPN" to Settings.ACTION_VPN_SETTINGS,
+        "VR helper services" to Settings.ACTION_VR_LISTENER_SETTINGS,
+        "WebView implementation" to Settings.ACTION_WEBVIEW_SETTINGS,
+        "Wi-Fi IP Settings" to Settings.ACTION_WIFI_IP_SETTINGS,
+        "Wi-Fi" to Settings.ACTION_WIFI_SETTINGS,
+        "Network & internet" to Settings.ACTION_WIRELESS_SETTINGS,
+        "Do Not Disturb" to Settings.ACTION_ZEN_MODE_PRIORITY_SETTINGS
+    )
+
+    override fun canHandle(query: Query): Boolean = true
+
+    override suspend fun query(query: Query): List<ProviderResult> {
+        val enabledProviders = settingsRepository.enabledProviders.value
+        if (enabledProviders[id] == false) return emptyList()
+
+        val normalized = query.trimmedText
+        
+        if (normalized.isBlank()) return emptyList()
+
+        return settingsActions.filter { (title, _) ->
+            title.contains(normalized, ignoreCase = true)
+        }.map { (title, action) ->
+            ProviderResult(
+                id = "$id:$action",
+                title = title,
+                subtitle = "System Settings",
+                defaultVectorIcon = Icons.Outlined.Settings,
+                providerId = id,
+                onSelect = {
+                    withContext(Dispatchers.Main) {
+                        try {
+                            val intent = Intent(action)
+                            if (intent.resolveActivity(activity.packageManager) != null) {
+                                activity.startActivity(intent)
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                },
+                keepOverlayUntilExit = true
+            )
+        }
+    }
+}

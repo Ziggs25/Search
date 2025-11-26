@@ -214,6 +214,14 @@ fun ProvidersSettingsScreen(
                 )
                 SettingsDivider()
                 ProviderRow(
+                    id = "system-settings",
+                    name = "System Settings",
+                    description = "Search for system settings",
+                    enabled = enabledProviders["system-settings"] ?: true,
+                    onToggle = { settingsRepository.setProviderEnabled("system-settings", it) }
+                )
+                SettingsDivider()
+                ProviderRow(
                     id = "text-utilities",
                     name = "Text utilities",
                     description = "Base64, URL tools",

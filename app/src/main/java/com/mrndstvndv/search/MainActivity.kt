@@ -53,6 +53,7 @@ import com.mrndstvndv.search.alias.AliasRepository
 import com.mrndstvndv.search.alias.AppLaunchAliasTarget
 import com.mrndstvndv.search.alias.WebSearchAliasTarget
 import com.mrndstvndv.search.provider.apps.AppListProvider
+import com.mrndstvndv.search.provider.system.SettingsProvider
 import com.mrndstvndv.search.provider.calculator.CalculatorProvider
 import com.mrndstvndv.search.provider.files.FileSearchProvider
 import com.mrndstvndv.search.provider.files.FileSearchRepository
@@ -116,6 +117,7 @@ class MainActivity : ComponentActivity() {
             val providers = remember(this@MainActivity) {
                 buildList {
                     add(AppListProvider(this@MainActivity, settingsRepository, defaultAppIconSize))
+                    add(SettingsProvider(this@MainActivity, settingsRepository))
                     add(CalculatorProvider(this@MainActivity))
                     add(TextUtilitiesProvider(this@MainActivity, settingsRepository))
                     add(FileSearchProvider(this@MainActivity, settingsRepository, fileSearchRepository, fileThumbnailRepository))
