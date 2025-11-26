@@ -15,6 +15,7 @@ class ProviderSettingsRepository(context: Context) {
     companion object {
         private const val PREF_NAME = "provider_settings"
         private const val KEY_WEB_SEARCH = "web_search"
+        private const val KEY_APP_SEARCH = "app_search"
         private const val KEY_TRANSLUCENT_RESULTS = "translucent_results"
         private const val KEY_BACKGROUND_OPACITY = "background_opacity"
         private const val KEY_BACKGROUND_BLUR_STRENGTH = "background_blur_strength"
@@ -34,11 +35,15 @@ class ProviderSettingsRepository(context: Context) {
     private val preferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
             KEY_FILE_SEARCH -> _fileSearchSettings.value = loadFileSearchSettings()
+            KEY_APP_SEARCH -> _appSearchSettings.value = loadAppSearchSettings()
         }
     }
 
     private val _webSearchSettings = MutableStateFlow(loadWebSearchSettings())
     val webSearchSettings: StateFlow<WebSearchSettings> = _webSearchSettings
+
+    private val _appSearchSettings = MutableStateFlow(loadAppSearchSettings())
+    val appSearchSettings: StateFlow<AppSearchSettings> = _appSearchSettings
 
     private val _translucentResultsEnabled = MutableStateFlow(loadTranslucentResultsEnabled())
     val translucentResultsEnabled: StateFlow<Boolean> = _translucentResultsEnabled
@@ -71,6 +76,11 @@ class ProviderSettingsRepository(context: Context) {
     fun saveWebSearchSettings(settings: WebSearchSettings) {
         preferences.edit { putString(KEY_WEB_SEARCH, settings.toJsonString()) }
         _webSearchSettings.value = settings
+    }
+
+    fun saveAppSearchSettings(settings: AppSearchSettings) {
+        preferences.edit { putString(KEY_APP_SEARCH, settings.toJsonString()) }
+        _appSearchSettings.value = settings
     }
 
     fun setTranslucentResultsEnabled(enabled: Boolean) {
@@ -190,6 +200,16 @@ class ProviderSettingsRepository(context: Context) {
             WebSearchSettings.fromJson(JSONObject(json)) ?: WebSearchSettings.default()
         } catch (ignored: JSONException) {
             WebSearchSettings.default()
+        }
+    }
+
+    private fun loadAppSearchSettings(): AppSearchSettings {
+        val json = preferences.getString(KEY_APP_SEARCH, null)
+        return try {
+            val parsed = json?.let { JSONObject(it) }
+            AppSearchSettings.fromJson(parsed) ?: AppSearchSettings.default()
+        } catch (ignored: JSONException) {
+            AppSearchSettings.default()
         }
     }
 
@@ -622,4 +642,27 @@ enum class FileSearchSortMode {
             return entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: NAME
         }
     }
+}
+
+data class AppSearchSettings(
+    val includePackageName: Boolean
+) {
+    companion object {
+        fun default(): AppSearchSettings = AppSearchSettings(includePackageName = false)
+
+        fun fromJson(json: JSONObject?): AppSearchSettings? {
+            if (json == null) return null
+            return AppSearchSettings(
+                includePackageName = json.optBoolean("includePackageName", false)
+            )
+        }
+    }
+
+    fun toJson(): JSONObject {
+        return JSONObject().apply {
+            put("includePackageName", includePackageName)
+        }
+    }
+
+    fun toJsonString(): String = toJson().toString()
 }

@@ -8,6 +8,7 @@ import androidx.compose.material.icons.outlined.Android
 import com.mrndstvndv.search.provider.Provider
 import com.mrndstvndv.search.provider.model.ProviderResult
 import com.mrndstvndv.search.provider.model.Query
+import com.mrndstvndv.search.provider.settings.ProviderSettingsRepository
 import com.mrndstvndv.search.util.loadAppIconBitmap
 import com.mrndstvndv.search.alias.AppLaunchAliasTarget
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +16,7 @@ import kotlinx.coroutines.withContext
 
 class AppListProvider(
     private val activity: ComponentActivity,
+    private val settingsRepository: ProviderSettingsRepository,
     private val iconSize: Int
 ) : Provider {
 
@@ -29,10 +31,16 @@ class AppListProvider(
 
     override suspend fun query(query: Query): List<ProviderResult> {
         val normalized = query.trimmedText
+        val settings = settingsRepository.appSearchSettings.value
+        val includePackageName = settings.includePackageName
+
         val matches = if (normalized.isBlank()) {
             applications
         } else {
-            applications.filter { it.label.contains(normalized, ignoreCase = true) }
+            applications.filter { 
+                it.label.contains(normalized, ignoreCase = true) ||
+                (includePackageName && it.packageName.contains(normalized, ignoreCase = true))
+            }
         }
 
         val limited = matches.take(MAX_RESULTS)

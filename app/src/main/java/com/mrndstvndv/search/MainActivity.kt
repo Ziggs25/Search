@@ -115,7 +115,7 @@ class MainActivity : ComponentActivity() {
             val useFrequencyRanking by rankingRepository.useFrequencyRanking.collectAsState()
             val providers = remember(this@MainActivity) {
                 buildList {
-                    add(AppListProvider(this@MainActivity, defaultAppIconSize))
+                    add(AppListProvider(this@MainActivity, settingsRepository, defaultAppIconSize))
                     add(CalculatorProvider(this@MainActivity))
                     add(TextUtilitiesProvider(this@MainActivity, settingsRepository))
                     add(FileSearchProvider(this@MainActivity, settingsRepository, fileSearchRepository, fileThumbnailRepository))

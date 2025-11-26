@@ -35,6 +35,7 @@ import com.mrndstvndv.search.ui.settings.WebSearchSettingsScreen
 import com.mrndstvndv.search.ui.settings.FileSearchSettingsScreen
 import com.mrndstvndv.search.ui.settings.TextUtilitiesSettingsScreen
 import com.mrndstvndv.search.ui.settings.ProviderListScreen
+import com.mrndstvndv.search.ui.settings.AppSearchSettingsScreen
 import com.mrndstvndv.search.ui.theme.SearchTheme
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +57,7 @@ class SettingsActivity : ComponentActivity() {
         WebSearch,
         FileSearch,
         TextUtilities,
+        AppSearch,
         ProviderList
     }
 
@@ -135,6 +137,7 @@ class SettingsActivity : ComponentActivity() {
                             onOpenWebSearchSettings = { currentScreen = Screen.WebSearch },
                             onOpenFileSearchSettings = { currentScreen = Screen.FileSearch },
                             onOpenTextUtilitiesSettings = { currentScreen = Screen.TextUtilities },
+                            onOpenAppSearchSettings = { currentScreen = Screen.AppSearch },
                             onBack = {
                                 if (initialScreen == Screen.Providers) {
                                     finish()
@@ -194,6 +197,13 @@ class SettingsActivity : ComponentActivity() {
                     Screen.TextUtilities -> {
                         BackHandler { currentScreen = Screen.Providers }
                         TextUtilitiesSettingsScreen(
+                            settingsRepository = settingsRepository,
+                            onBack = { currentScreen = Screen.Providers }
+                        )
+                    }
+                    Screen.AppSearch -> {
+                        BackHandler { currentScreen = Screen.Providers }
+                        AppSearchSettingsScreen(
                             settingsRepository = settingsRepository,
                             onBack = { currentScreen = Screen.Providers }
                         )

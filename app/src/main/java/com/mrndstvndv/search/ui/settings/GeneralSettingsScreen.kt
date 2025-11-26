@@ -25,7 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Label
+import androidx.compose.material.icons.automirrored.rounded.Label
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material3.Button
@@ -133,7 +133,7 @@ fun GeneralSettingsScreen(
                     )
                     SettingsDivider()
                     SettingsTile(
-                        icon = Icons.Rounded.Label,
+                        icon = Icons.AutoMirrored.Rounded.Label,
                         title = "Aliases",
                         subtitle = aliasesSubtitle,
                         onClick = onOpenAliases
@@ -160,6 +160,7 @@ fun ProvidersSettingsScreen(
     onOpenWebSearchSettings: () -> Unit,
     onOpenFileSearchSettings: () -> Unit,
     onOpenTextUtilitiesSettings: () -> Unit,
+    onOpenAppSearchSettings: () -> Unit,
     onBack: () -> Unit
 ) {
     val enabledProviders by settingsRepository.enabledProviders.collectAsState()
@@ -182,7 +183,8 @@ fun ProvidersSettingsScreen(
                     name = "Applications",
                     description = "Search installed apps",
                     enabled = enabledProviders["app-list"] ?: true,
-                    onToggle = { settingsRepository.setProviderEnabled("app-list", it) }
+                    onToggle = { settingsRepository.setProviderEnabled("app-list", it) },
+                    onClick = onOpenAppSearchSettings
                 )
                 SettingsDivider()
                 ProviderRow(
